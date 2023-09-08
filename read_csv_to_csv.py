@@ -31,7 +31,7 @@ matching_files = [file for file in os.listdir(directory) if file.startswith("GPM
 
 # Initialize an empty list to store data from all files
 
-data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'mean_ln_ratio': [], 'se_mean_ln_ratio':[]}
+data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'mean_ln_ratio': [], 'se_mean_ln_ratio':[], 'mean_se_ln_ratio': [], 'se_mean_se_ln_ratio':[]}
 # Loop through the matching files and extract data
 for filename in matching_files:
     filename_frag = filename.rstrip('.csv').split('_')
@@ -56,7 +56,8 @@ for filename in matching_files:
     # 'ln_ratio', 'se_ln_ratio', 'percentile_2_5', 'percentile_97_5', 'intervals_include_zero', 'P_value', 'percentile_2_5 > 0', 'percentile_97_5 < 0']  
     data['mean_ln_ratio'].append(df['ln_ratio'].mean())
     data['se_mean_ln_ratio'].append(df['ln_ratio'].std()/sqrt(len(df)))
-
+    data['mean_se_ln_ratio'].append(df['se_ln_ratio'].mean())
+    data['se_mean_se_ln_ratio'].append(df['se_ln_ratio'].std()/sqrt(len(df)))
 
 
     # Append the extracted data to the list
@@ -65,6 +66,6 @@ for filename in matching_files:
 df = pd.DataFrame(data)
 df[df.columns[1:]] = df[df.columns[1:]].astype(float)
 # # Define the filename for your Excel file
-df.to_csv("From_text_GPM_MC_nMonte_100000_N_Higgins12MoMNo_SE.csv")
+df.to_csv("From_text_GPM_MC_nMonte_100000_N_Higgins12MoMNo_SEmean.csv")
 
 quit()
