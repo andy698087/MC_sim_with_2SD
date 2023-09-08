@@ -31,7 +31,7 @@ matching_files = [file for file in os.listdir(directory) if file.startswith("GPM
 
 # Initialize an empty list to store data from all files
 
-data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'mean_ln_ratio': [], 'se_mean_ln_ratio':[], 'mean_se_ln_ratio': [], 'se_mean_se_ln_ratio':[]}
+data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'mean_intervals_include_zero':[], 'mean_ln_ratio': [], 'se_mean_ln_ratio':[], 'mean_se_ln_ratio': [], 'se_mean_se_ln_ratio':[]}
 # Loop through the matching files and extract data
 for filename in matching_files:
     filename_frag = filename.rstrip('.csv').split('_')
@@ -54,6 +54,7 @@ for filename in matching_files:
     # print(df.columns.tolist())
     # 'Seeds', 'rSampleOfRandoms_1' ... 'rSampleOfRandoms_200', 'rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2', 'lower_bound_SE', 'upper_bound_SE', 
     # 'ln_ratio', 'se_ln_ratio', 'percentile_2_5', 'percentile_97_5', 'intervals_include_zero', 'P_value', 'percentile_2_5 > 0', 'percentile_97_5 < 0']  
+    data['mean_intervals_include_zero'].append(df['intervals_include_zero'].mean())
     data['mean_ln_ratio'].append(df['ln_ratio'].mean())
     data['se_mean_ln_ratio'].append(df['ln_ratio'].std()/sqrt(len(df)))
     data['mean_se_ln_ratio'].append(df['se_ln_ratio'].mean())
