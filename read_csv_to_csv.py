@@ -1,27 +1,7 @@
-"""
-start_time: 2023-09-03 17:12:31.515876
-end_time: 2023-09-03 17:16:15.667721
-time_difference: 0:03:44.151845
-
-nMonte = 10000; N1 = 50; CV= 0.5
-
-ln ratio SE include zero: 0.9174
-Count (ratio) P < 0.05: 826 (0.082600)
-Count (ratio) P < 0.01: 203 (0.020300)
-Percentile 2.5 > 0 count (ratio): 416 (0.041600)
-Percentile 97.5 > 0 count (ratio): 440 (0.044000)
-"""
-
 import pandas as pd
 import os
 import re
 from math import sqrt
-
-def SE(data, N):
-    return data/sqrt(N)
-
-# Define a regular expression pattern to match content within parentheses
-pattern = r'\((.*?)\)'
 
 # Define the directory where your text files are located
 directory = "C:/Users/User/MC-sim/GPM_MC_nMonte_100000_MoM_compare"
