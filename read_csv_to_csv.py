@@ -31,7 +31,7 @@ matching_files = [file for file in os.listdir(directory) if file.startswith("GPM
 
 # Initialize an empty list to store data from all files
 
-data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'intervals_include_zero_mean': [], 'intervals_include_zero_SE': []}
+data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'intervals_include_zero_mean': [], 'mean_ln_ratio': []}
 # Loop through the matching files and extract data
 for filename in matching_files:
     filename_frag = filename.rstrip('.csv').split('_')
@@ -50,9 +50,11 @@ for filename in matching_files:
 
     # Extract relevant information from each file
     df = pd.read_csv(os.path.join(directory,filename))
-
+    print(df.columns)
+    quit()
     data['intervals_include_zero_mean'].append(df['intervals_include_zero'].mean())
-    data['intervals_include_zero_SE'].append(df['intervals_include_zero'].std()/sqrt(len(df)))
+    data['intervals_include_zero_SE'].append(df['ln_ratio'].std()/sqrt(len(df)))
+
 
 
     # Append the extracted data to the list
