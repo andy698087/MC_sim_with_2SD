@@ -63,20 +63,20 @@ class SimulPivotMC(object):
         
         U1 = np.sqrt(chi2.ppf(self.random_numbers1_1, self.N1 - 1 ))
         Z1 = norm.ppf(self.random_numbers2_1)
-        print('U1:', U1)
+        # print('U1:', U1)
         # pd.DataFrame(U1).to_csv('U1_view.csv')
 
         Uratio1 = SampleSDLog1 * sqrt(self.N1-1)
         Zratio1 = 1/sqrt(self.N1)
-        print('Uratio1:', Uratio1)
+        # print('Uratio1:', Uratio1)
 
         Pivot1 = np.exp(SampleMeanLog1- Uratio1 * Zratio1 * Z1/U1) * np.sqrt( -1 + np.exp((Uratio1/U1)**2)) * np.sqrt(np.exp((Uratio1/U1)**2))
 
-        print('Pivot1:', Pivot1)
-        pd.DataFrame({'SampleMeanLog1':SampleMeanLog1, 'Pivot1':Pivot1, 'part1':np.exp(SampleMeanLog1- Uratio1 * Zratio1 * Z1/U1), 'part2':np.sqrt( -1 + np.exp((Uratio1/U1)**2)),
-                      'part2-2': np.exp((Uratio1/U1)**2), 'Uratio1':Uratio1, 'U1':U1,
-                      'part3': np.sqrt(np.exp((Uratio1/U1)**2))
-                      }).to_csv('Pivot1_view.csv')
+        # print('Pivot1:', Pivot1)
+        # pd.DataFrame({'SampleMeanLog1':SampleMeanLog1, 'Pivot1':Pivot1, 'part1':np.exp(SampleMeanLog1- Uratio1 * Zratio1 * Z1/U1), 'part2':np.sqrt( -1 + np.exp((Uratio1/U1)**2)),
+        #               'part2-2': np.exp((Uratio1/U1)**2), 'Uratio1':Uratio1, 'U1':U1,
+        #               'part3': np.sqrt(np.exp((Uratio1/U1)**2))
+        #               }).to_csv('Pivot1_view.csv')
         
         #group 2 pivot calculatgition
         SampleMeanLog2 = row[col_SampleMeanLog2]
@@ -92,14 +92,14 @@ class SimulPivotMC(object):
         # print("Pivot2:", Pivot2)
 
         result = np.log(Pivot1) - np.log(Pivot2)
-        print('result:', result)
+        # print('result:', result)
         # pd.DataFrame(result).to_csv('result_view.csv')
 
         # Calculate ln ratio and SE ln ratio by percentile and Z statistics
         ln_ratio = pd.Series(result).quantile(.5)
-        print('ln_ratio:',ln_ratio)
+        # print('ln_ratio:',ln_ratio)
         se_ln_ratio = (pd.Series(result).quantile(.75) - pd.Series(result).quantile(.25))/( 2 * norm.ppf(0.75))
-        print('se_ln_ratio:',se_ln_ratio)
+        # print('se_ln_ratio:',se_ln_ratio)
         # Calculate the confidence intervals with z_score
         lower_bound = ln_ratio - self.z_score * se_ln_ratio
         upper_bound = ln_ratio + self.z_score * se_ln_ratio   
