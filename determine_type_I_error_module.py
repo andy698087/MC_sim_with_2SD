@@ -63,15 +63,21 @@ class SimulPivotMC(object):
         
         U1 = np.sqrt(chi2.ppf(self.random_numbers1_1, self.N1 - 1 ))
         Z1 = norm.ppf(self.random_numbers2_1)
-        # print('U1:', U1)
+        print('U1:', U1)
+        # pd.DataFrame(U1).to_csv('U1_view.csv')
 
         Uratio1 = SampleSDLog1 * sqrt(self.N1-1)
         Zratio1 = 1/sqrt(self.N1)
-        # print('Uratio1:', Uratio1)
-        
-        Pivot1 = np.exp(SampleMeanLog1- Uratio1 * Zratio1 * Z1/U1) * np.sqrt( -1 + np.exp((Uratio1/U1)**2)) * np.sqrt(np.exp((Uratio1/U1)**2))
-        # print('Pivot1:', Pivot1)
+        print('Uratio1:', Uratio1)
 
+        Pivot1 = np.exp(SampleMeanLog1- Uratio1 * Zratio1 * Z1/U1) * np.sqrt( -1 + np.exp((Uratio1/U1)**2)) * np.sqrt(np.exp((Uratio1/U1)**2))
+
+        print('Pivot1:', Pivot1)
+        pd.DataFrame({'SampleMeanLog1':SampleMeanLog1, 'Pivot1':Pivot1, 'part1':np.exp(SampleMeanLog1- Uratio1 * Zratio1 * Z1/U1), 'part2':np.sqrt( -1 + np.exp((Uratio1/U1)**2)),
+                      'part2-2': np.exp((Uratio1/U1)**2), 'Uratio1':Uratio1, 'U1':U1,
+                      'part3': np.sqrt(np.exp((Uratio1/U1)**2))
+                      }).to_csv('Pivot1_view.csv')
+        
         #group 2 pivot calculatgition
         SampleMeanLog2 = row[col_SampleMeanLog2]
         SampleSDLog2 = row[col_SampleSDLog2]
@@ -86,18 +92,21 @@ class SimulPivotMC(object):
         # print("Pivot2:", Pivot2)
 
         result = np.log(Pivot1) - np.log(Pivot2)
+        print('result:', result)
+        # pd.DataFrame(result).to_csv('result_view.csv')
 
         # Calculate ln ratio and SE ln ratio by percentile and Z statistics
-        ln_ratio = np.percentile(result, 50)
-        se_ln_ratio = (np.percentile(result, 75) - np.percentile(result, 25))/( 2 * norm.ppf(0.75))
-     
+        ln_ratio = pd.Series(result).quantile(.5)
+        print('ln_ratio:',ln_ratio)
+        se_ln_ratio = (pd.Series(result).quantile(.75) - pd.Series(result).quantile(.25))/( 2 * norm.ppf(0.75))
+        print('se_ln_ratio:',se_ln_ratio)
         # Calculate the confidence intervals with z_score
         lower_bound = ln_ratio - self.z_score * se_ln_ratio
         upper_bound = ln_ratio + self.z_score * se_ln_ratio   
         # print('lower and upper bound with z_score, ln ratio and SE:',lower_bound, upper_bound)
         
-        percentile_2_5 = np.percentile(result, 2.5)
-        percentile_97_5 = np.percentile(result, 97.5)
+        percentile_2_5 = pd.Series(result).quantile(.025)
+        percentile_97_5 = pd.Series(result).quantile(.975)
 
         # return the lower and upper bound for determine the confidence intervals
         return lower_bound, upper_bound, ln_ratio, se_ln_ratio, percentile_2_5, percentile_97_5, 
@@ -151,14 +160,11 @@ class SimulPivotMC(object):
         
         rSampleOfRandoms1 = row[:half_N1_N2]
         rSampleOfRandoms2 = row[half_N1_N2:]
-        if self.N1 <= 2 or self.N2 <= 2: 
-            ddof = 0
-        else:
-            ddof = 1
+        
         rSampleMeanLogScale1 = np.mean(rSampleOfRandoms1)
-        rSampleSDLogScale1 = np.std(rSampleOfRandoms1, ddof=ddof)
+        rSampleSDLogScale1 = np.std(rSampleOfRandoms1, ddof=1)
         rSampleMeanLogScale2 = np.mean(rSampleOfRandoms2)
-        rSampleSDLogScale2 = np.std(rSampleOfRandoms2, ddof=ddof)
+        rSampleSDLogScale2 = np.std(rSampleOfRandoms2, ddof=1)
 
         return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2 #, rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
 
