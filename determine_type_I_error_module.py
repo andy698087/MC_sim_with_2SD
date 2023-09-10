@@ -151,11 +151,14 @@ class SimulPivotMC(object):
         
         rSampleOfRandoms1 = row[:half_N1_N2]
         rSampleOfRandoms2 = row[half_N1_N2:]
-
+        if self.N1 <= 2 or self.N2 <= 2: 
+            ddof = 0
+        else:
+            ddof = 1
         rSampleMeanLogScale1 = np.mean(rSampleOfRandoms1)
-        rSampleSDLogScale1 = np.std(rSampleOfRandoms1, ddof=1)
+        rSampleSDLogScale1 = np.std(rSampleOfRandoms1, ddof=ddof)
         rSampleMeanLogScale2 = np.mean(rSampleOfRandoms2)
-        rSampleSDLogScale2 = np.std(rSampleOfRandoms2, ddof=1)
+        rSampleSDLogScale2 = np.std(rSampleOfRandoms2, ddof=ddof)
 
         return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2 #, rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
 
