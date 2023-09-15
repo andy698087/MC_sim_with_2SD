@@ -87,7 +87,7 @@ for MoM in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
             Z2 = norm.ppf(random_numbers2_2)
 
             #collecting results
-            dict_results = {'seed_':[],'rSampleOfRandoms': [], 'rSampleMeanLogScale1': [], 'rSampleSDLogScale1': [], 'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
+            dict_results = { 'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
             # the pre-determined list of seeds, using amount of nMonte
             list_seeds = [i for i in range(seed_value, seed_value + nMonte)] 
             for seed_ in list_seeds:
