@@ -23,7 +23,7 @@ def transform_from_raw_to_log_mean_SD(N, Mean, SD):
     return MeanLogScale_1, SDLogScale_1, SDLogScale_2
 
 # number of Monte Carlo Simulations
-nMonte = 1000
+nMonte = 100000
 
 # Calculate z-score for alpha = 0.05, 
 # ppf is the percent point function that is inverse of cumulative distribution function
@@ -48,24 +48,24 @@ random_numbers2_1 = np.random.rand(nSimulForPivot)
 np.random.seed(seed_value - 4)
 random_numbers2_2 = np.random.rand(nSimulForPivot)
 
-# for Table 1, 2, and 3, respectively ['no_moments', 'first_two_moment', 'higher_orders_of_moments']
-for MoM in ['higher_orders_of_moments']:
+# for Table 1, 2, and 3, respectively
+for MoM in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
 
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [15]:
+    for N in [15, 25, 50]:
         N1 = N
         N2 = N1
 
-        for CV in [0.3]:
+        for CV in [0.15, 0.3, 0.5]:
             # coefficient of variation, we choose 0.15, 0.3, 0.5
             CV1 = CV
             CV2 = CV1
 
-            # Mean in log scale, notation "mu_i" in the manuscript
+            # Mean in log scale, notation "μ_i" in the manuscript
             rMeanLogScale1 = 1
             rMeanLogScale2 = rMeanLogScale1
                     
-            # Standard deviation in log scale, notation "sigma_i" in the manuscript
+            # Standard deviation in log scale, notation "σ_i" in the manuscript
             rSDLogScale1 = sqrt(log(1 + CV1 ** 2))  #Equation 1 in the manuscript
             rSDLogScale2 = rSDLogScale1
 
@@ -77,23 +77,11 @@ for MoM in ['higher_orders_of_moments']:
 
             # Generate random number for later used in calculating Ui and Zi in generalized pivotal method
             # group 1 pivot calculation
-            np.random.seed(seed_value - 1)
-            random_numbers1_1 = np.random.rand(nSimulForPivot)
-
-            np.random.seed(seed_value - 2)
-            random_numbers1_2 = np.random.rand(nSimulForPivot)
-            
             # U_i and Z_i used in Equation 3
             U1 = chi2.ppf(random_numbers1_1, N1 - 1 )
             Z1 = norm.ppf(random_numbers2_1)
 
             #group 2 pivot calculation
-            np.random.seed(seed_value - 3)
-            random_numbers2_1 = np.random.rand(nSimulForPivot)
-
-            np.random.seed(seed_value - 4)
-            random_numbers2_2 = np.random.rand(nSimulForPivot)
-
             # U_i and Z_i used in Equation 3
             U2 = chi2.ppf(random_numbers1_2, N2 - 1 )
             Z2 = norm.ppf(random_numbers2_2)
