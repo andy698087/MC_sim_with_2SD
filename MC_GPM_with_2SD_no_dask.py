@@ -6,12 +6,12 @@ from math import sqrt, log, exp
 
 # Equation 3
 def GPM_log_ratio_SD(rSampleMeanLogScale, rSampleSDLogScale, N, U, Z):
-    return np.exp(rSampleMeanLogScale- np.sqrt((rSampleSDLogScale**2 * (N-1))/U1) * (Z/sqrt(N)) ) *\
+    return np.exp(rSampleMeanLogScale- np.sqrt((rSampleSDLogScale**2 * (N-1))/U) * (Z/sqrt(N)) ) *\
                   np.sqrt((np.exp((rSampleSDLogScale**2 * (N-1))/U) - 1) * np.exp((rSampleSDLogScale**2 * (N-1))/U))
 
 #Equation 7, 8, 9 and 10
 def transform_from_raw_to_log_mean_SD(N, Mean, SD):
-    MeanLogScale_1 = log(Mean) - (1/2) * log(1 + (SD/N)**2)   #Mean in log scale, Equation 7
+    MeanLogScale_1 = log(Mean) - (1/2) * log(1 + (SD/Mean)**2)   #Mean in log scale, Equation 7
     SDLogScale_1 = sqrt(log((SD/Mean)**2 + 1))   #SD in log scale, Equation 8
     var_x = (SD**2) / N
     dz_dmean = (1/Mean) + (SD**2) / (Mean * ((SD**2) + (Mean**2)))
@@ -23,7 +23,7 @@ def transform_from_raw_to_log_mean_SD(N, Mean, SD):
     return MeanLogScale_1, SDLogScale_1, SDLogScale_2
 
 # number of Monte Carlo Simulations
-nMonte = 100000
+nMonte = 1000
 
 # Calculate z-score for alpha = 0.05, 
 # ppf is the percent point function that is inverse of cumulative distribution function
@@ -48,15 +48,15 @@ random_numbers2_1 = np.random.rand(nSimulForPivot)
 np.random.seed(seed_value - 4)
 random_numbers2_2 = np.random.rand(nSimulForPivot)
 
-# for Table 1, 2, and 3, respectively
-for MoM in ['no MoM', 'first_two_moment', 'higher_orders_of_moments']:
+# for Table 1, 2, and 3, respectively ['no_moments', 'first_two_moment', 'higher_orders_of_moments']
+for MoM in ['higher_orders_of_moments']:
 
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [15,25,50]:
+    for N in [15]:
         N1 = N
         N2 = N1
 
-        for CV in [0.15, 0.3, 0.5]:
+        for CV in [0.3]:
             # coefficient of variation, we choose 0.15, 0.3, 0.5
             CV1 = CV
             CV2 = CV1
@@ -99,44 +99,49 @@ for MoM in ['no MoM', 'first_two_moment', 'higher_orders_of_moments']:
             Z2 = norm.ppf(random_numbers2_2)
 
             #collecting results
-            dict_results = {'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
+            dict_results = {'seed_':[],'rSampleOfRandoms': [], 'rSampleMeanLogScale1': [], 'rSampleSDLogScale1': [], 'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
             # the pre-determined list of seeds, using amount of nMonte
             list_seeds = [i for i in range(seed_value, seed_value + nMonte)] 
             for seed_ in list_seeds:
+                dict_results['seed_'].append(seed_)
                 # calculate the mean and std of a sample generate from random generater of normal distribution
                 np.random.seed(seed_)
-                
-                if MoM == 'no moments': #using no method of moments 
-                    # generate log-normal distribution, using mean of rMeanLogScale and standard deviation of rSDLogScale
-                    rSampleOfRandoms1 = [norm.ppf(i,loc=rMeanLogScale1, scale=rSDLogScale1) for i in np.random.rand(N1)] 
-                    rSampleOfRandoms2 = [norm.ppf(i,loc=rMeanLogScale2, scale=rSDLogScale2) for i in np.random.rand(N2)] 
+                # generate log-normal distribution, using mean of rMeanLogScale and standard deviation of rSDLogScale
+                rSampleOfRandoms = [norm.ppf(i,loc=rMeanLogScale1, scale=rSDLogScale1) for i in np.random.rand(N1+N2)]
+                dict_results['rSampleOfRandoms'].append(np.exp(rSampleOfRandoms))
+                if MoM == 'no_moments': #using no method of moments 
+                    rSampleOfRandoms1 = rSampleOfRandoms[:N1]
+                    rSampleOfRandoms2 = rSampleOfRandoms[N1:N1+N2] 
                     
                     rSampleMeanLogScale1 = np.mean(rSampleOfRandoms1) # the mean of rSampleOfRandoms1, notation "z_i"
                     rSampleSDLogScale1 = np.std(rSampleOfRandoms1, ddof=1) # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
                     rSampleMeanLogScale2 = np.mean(rSampleOfRandoms2)
                     rSampleSDLogScale2 = np.std(rSampleOfRandoms2, ddof=1)
-                
+                    dict_results['rSampleMeanLogScale1'].append(rSampleMeanLogScale1)
+                    dict_results['rSampleSDLogScale1'].append(rSampleSDLogScale1)
                 else:# using method of moments to transform from raw to log mean and SD
                     # generate log-normal distribution, using mean of rMeanLogScale and standard deviation of rSDLogScale
-                    rSampleOfRandoms1 = [exp(norm.ppf(i,loc=rMeanLogScale1, scale=rSDLogScale1)) for i in np.random.rand(N1)] 
-                    rSampleOfRandoms2 = [exp(norm.ppf(i,loc=rMeanLogScale2, scale=rSDLogScale2)) for i in np.random.rand(N2)] 
-                    
+                    rSampleOfRandoms = np.exp(rSampleOfRandoms)
+                    rSampleOfRandoms1 = rSampleOfRandoms[:N1]
+                    rSampleOfRandoms2 = rSampleOfRandoms[N1:N1+N2] 
+
                     rSampleMeanTimeScale1 = np.mean(rSampleOfRandoms1) # the mean of rSampleOfRandoms1, notation "z_i"
                     rSampleSDTimeScale1 = np.std(rSampleOfRandoms1, ddof=1) # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
                     rSampleMeanTimeScale2 = np.mean(rSampleOfRandoms2)
                     rSampleSDTimeScale2 = np.std(rSampleOfRandoms2, ddof=1)
-
-                    if MoM == 'first two moments': #using Equation 7 and 8
+                    
+                    if MoM == 'first_two_moment': #using Equation 7 and 8
                         rSampleMeanLogScale1, rSampleSDLogScale1, _ = transform_from_raw_to_log_mean_SD(N1, rSampleMeanTimeScale1, rSampleSDTimeScale1)
                         rSampleMeanLogScale2, rSampleSDLogScale2, _ = transform_from_raw_to_log_mean_SD(N2, rSampleMeanTimeScale2, rSampleSDTimeScale2)
-                    elif MoM == 'higher orders of moments': #using Equation 7 and 9
+                    elif MoM == 'higher_orders_of_moments': #using Equation 7 and 9
                         rSampleMeanLogScale1, _, rSampleSDLogScale1, = transform_from_raw_to_log_mean_SD(N1, rSampleMeanTimeScale1, rSampleSDTimeScale1)
                         rSampleMeanLogScale2, _, rSampleSDLogScale2, = transform_from_raw_to_log_mean_SD(N2, rSampleMeanTimeScale2, rSampleSDTimeScale2)
+                    dict_results['rSampleMeanLogScale1'].append(rSampleMeanLogScale1)
+                    dict_results['rSampleSDLogScale1'].append(rSampleSDLogScale1)
                 
                 # Equation 3 
                 Pivot1 = GPM_log_ratio_SD(rSampleMeanLogScale1, rSampleSDLogScale1, N1, U1, Z1)
                 Pivot2 = GPM_log_ratio_SD(rSampleMeanLogScale2, rSampleSDLogScale2, N2, U2, Z2)
-                
                 # Equation 2, generalized pivotal statistics
                 pivot_statistics = np.log(Pivot1) - np.log(Pivot2)
 
@@ -152,7 +157,7 @@ for MoM in ['no MoM', 'first_two_moment', 'higher_orders_of_moments']:
                 dict_results['coverage'].append((lower_bound <= 0) and (upper_bound >= 0))
             
             end_time = datetime.now()
-            print(f'N={N1} CV={CV1} percentage coverage: {dict_results['coverage'].mean()}') # print out the percentage of coverage
+            print(f'MoM={MoM} N={N1} CV={CV1} percentage coverage: {np.mean(dict_results["coverage"])}') # print out the percentage of coverage
             
             
             output_dir = f"GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
