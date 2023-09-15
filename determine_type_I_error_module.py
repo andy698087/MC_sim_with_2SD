@@ -94,19 +94,19 @@ class SimulPivotMC(object):
         result = np.log(Pivot1) - np.log(Pivot2)
         # print('result:', result)
         # pd.DataFrame(result).to_csv('result_view.csv')
-
+        len_result = len(result)
         # Calculate ln ratio and SE ln ratio by percentile and Z statistics
-        ln_ratio = pd.Series(result).quantile(.5)
+        ln_ratio = np.sort(result)[round(len_result*0.5)]
         # print('ln_ratio:',ln_ratio)
-        se_ln_ratio = (pd.Series(result).quantile(.75) - pd.Series(result).quantile(.25))/( 2 * norm.ppf(0.75))
+        se_ln_ratio = (np.sort(result)[round(len_result*0.75)] - np.sort(result)[round(len_result*0.25)])/( 2 * norm.ppf(0.75))
         # print('se_ln_ratio:',se_ln_ratio)
         # Calculate the confidence intervals with z_score
         lower_bound = ln_ratio - self.z_score * se_ln_ratio
         upper_bound = ln_ratio + self.z_score * se_ln_ratio   
         # print('lower and upper bound with z_score, ln ratio and SE:',lower_bound, upper_bound)
         
-        percentile_2_5 = pd.Series(result).quantile(.025)
-        percentile_97_5 = pd.Series(result).quantile(.975)
+        percentile_2_5 = np.sort(result)[round(len_result*0.925)]
+        percentile_97_5 = np.sort(result)[round(len_result*0.975)]
 
         # return the lower and upper bound for determine the confidence intervals
         return lower_bound, upper_bound, ln_ratio, se_ln_ratio, percentile_2_5, percentile_97_5, 
