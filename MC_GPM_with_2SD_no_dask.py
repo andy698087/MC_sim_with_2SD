@@ -86,8 +86,17 @@ for method_of_moments in ['first_two_moment', 'higher_orders_of_moments']:
             Z2 = norm.ppf(random_numbers2_2)
 
             #collecting results
+<<<<<<< HEAD
             dict_results = {'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
+=======
+<<<<<<< HEAD
+            dict_results = { 'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
+            # the pre-determined list of seeds, using amount of nMonte
+=======
+            dict_results = {'seed_':[],'rSampleOfRandoms': [], 'rSampleMeanLogScale1': [], 'rSampleSDLogScale1': [], 'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
+>>>>>>> 1cf52f51c318984302571adc76c8510380610725
             # the pre-determined list of seeds, using number of nMonte
+>>>>>>> 0974f6795720e6e2505386986f15da37bdde5cd1
             list_seeds = [i for i in range(seed_value, seed_value + nMonte)] 
             for seed_ in list_seeds:
                 # calculate the mean and std of a sample generate from random generater of normal distribution
