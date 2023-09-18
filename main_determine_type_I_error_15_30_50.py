@@ -12,10 +12,10 @@ import dask.dataframe as dd
 from sys import argv
 
 # if __name__ == '__main__': # just a declare for starting process below, __main__ is the primary process of python
-nMonteSim = 100000 # nMonte
-for MoM in ['original MoM']: # 'Higgins1', 'Higgins2', 'noMethodOfMoments', any others to 'original MoM'
-    for N in [25]:
-        for CV in [0.5]: # Missed original MoM, N = 25, CV = 0.5
+nMonteSim = 1 # nMonte
+for MoM in [False]: # 'Higgins1', 'Higgins2', 'noMethodOfMoments', any others to 'original MoM'
+    for N in [2]:
+        for CV in [0.15]: # Missed original MoM, N = 25, CV = 0.5
 
 
             start_time = datetime.now() # record the datetime at the start
@@ -49,8 +49,7 @@ for MoM in ['original MoM']: # 'Higgins1', 'Higgins2', 'noMethodOfMoments', any 
             output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV= {CV1}\n\nln ratio SE include zero: {coverage_by_ln_ratio}\n"
             
             output_dir = f"GPM_MC_nMonte_{nMonte}_N1_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
-
-
+            
             print('csv save to ' + output_dir + f'_{MoM}.csv')
             df_record.to_csv(output_dir + f'_{MoM}.csv')
 
