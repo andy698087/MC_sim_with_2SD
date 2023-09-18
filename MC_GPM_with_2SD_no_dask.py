@@ -49,7 +49,7 @@ np.random.seed(seed_value - 4)
 random_numbers2_2 = np.random.rand(nSimulForPivot)
 
 # for Table 1, 2, and 3, respectively
-for MoM in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
+for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
 
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
     for N in [15, 25, 50]:
