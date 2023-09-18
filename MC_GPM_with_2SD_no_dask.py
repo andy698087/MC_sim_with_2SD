@@ -5,7 +5,7 @@ from datetime import datetime
 from math import sqrt, log, exp
 
 # Equation 3
-def Pivot_calculation(rSampleMeanLogScale, rSampleSDLogScale, N, U, Z):
+def GPM_log_ratio_SD(rSampleMeanLogScale, rSampleSDLogScale, N, U, Z):
     return np.exp(rSampleMeanLogScale- np.sqrt((rSampleSDLogScale**2 * (N-1))/U) * (Z/sqrt(N)) ) *\
                   np.sqrt((np.exp((rSampleSDLogScale**2 * (N-1))/U) - 1) * np.exp((rSampleSDLogScale**2 * (N-1))/U))
 
@@ -48,8 +48,8 @@ random_numbers2_1 = np.random.rand(nSimulForPivot)
 np.random.seed(seed_value - 4)
 random_numbers2_2 = np.random.rand(nSimulForPivot)
 
-# Method of moments, for Table 1, 2, and 3, respectively
-for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
+# for Table 1, 2, and 3, respectively
+for MoM in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
 
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
     for N in [15, 25, 50]:
@@ -87,13 +87,8 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
             Z2 = norm.ppf(random_numbers2_2)
 
             #collecting results
-<<<<<<< HEAD
             dict_results = { 'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
             # the pre-determined list of seeds, using amount of nMonte
-=======
-            dict_results = {'seed_':[],'rSampleOfRandoms': [], 'rSampleMeanLogScale1': [], 'rSampleSDLogScale1': [], 'ln_ratio': [], 'se_ln_ratio': [], 'coverage': []}
-            # the pre-determined list of seeds, using number of nMonte
->>>>>>> 0974f6795720e6e2505386986f15da37bdde5cd1
             list_seeds = [i for i in range(seed_value, seed_value + nMonte)] 
             for seed_ in list_seeds:
                 dict_results['seed_'].append(seed_)
@@ -102,7 +97,7 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
                 # generate log-normal distribution, using mean of rMeanLogScale and standard deviation of rSDLogScale
                 rSampleOfRandoms = [norm.ppf(i,loc=rMeanLogScale1, scale=rSDLogScale1) for i in np.random.rand(N1+N2)]
                 dict_results['rSampleOfRandoms'].append(np.exp(rSampleOfRandoms))
-                if method_of_moments == 'no_moments': #using no method of moments 
+                if MoM == 'no_moments': #using no method of moments 
                     rSampleOfRandoms1 = rSampleOfRandoms[:N1]
                     rSampleOfRandoms2 = rSampleOfRandoms[N1:N1+N2] 
                     
@@ -110,7 +105,6 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
                     rSampleSDLogScale1 = np.std(rSampleOfRandoms1, ddof=1) # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
                     rSampleMeanLogScale2 = np.mean(rSampleOfRandoms2)
                     rSampleSDLogScale2 = np.std(rSampleOfRandoms2, ddof=1)
-
                     dict_results['rSampleMeanLogScale1'].append(rSampleMeanLogScale1)
                     dict_results['rSampleSDLogScale1'].append(rSampleSDLogScale1)
                 else:# using method of moments to transform from raw to log mean and SD
@@ -124,38 +118,37 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
                     rSampleMeanTimeScale2 = np.mean(rSampleOfRandoms2)
                     rSampleSDTimeScale2 = np.std(rSampleOfRandoms2, ddof=1)
                     
-                    if method_of_moments == 'first_two_moment': #using Equation 7 and 8
+                    if MoM == 'first_two_moment': #using Equation 7 and 8
                         rSampleMeanLogScale1, rSampleSDLogScale1, _ = transform_from_raw_to_log_mean_SD(N1, rSampleMeanTimeScale1, rSampleSDTimeScale1)
                         rSampleMeanLogScale2, rSampleSDLogScale2, _ = transform_from_raw_to_log_mean_SD(N2, rSampleMeanTimeScale2, rSampleSDTimeScale2)
-                    elif method_of_moments == 'higher_orders_of_moments': #using Equation 7 and 9
+                    elif MoM == 'higher_orders_of_moments': #using Equation 7 and 9
                         rSampleMeanLogScale1, _, rSampleSDLogScale1, = transform_from_raw_to_log_mean_SD(N1, rSampleMeanTimeScale1, rSampleSDTimeScale1)
                         rSampleMeanLogScale2, _, rSampleSDLogScale2, = transform_from_raw_to_log_mean_SD(N2, rSampleMeanTimeScale2, rSampleSDTimeScale2)
                     dict_results['rSampleMeanLogScale1'].append(rSampleMeanLogScale1)
                     dict_results['rSampleSDLogScale1'].append(rSampleSDLogScale1)
                 
                 # Equation 3 
-                Pivot1 = Pivot_calculation(rSampleMeanLogScale1, rSampleSDLogScale1, N1, U1, Z1)
-                Pivot2 = Pivot_calculation(rSampleMeanLogScale2, rSampleSDLogScale2, N2, U2, Z2)
+                Pivot1 = GPM_log_ratio_SD(rSampleMeanLogScale1, rSampleSDLogScale1, N1, U1, Z1)
+                Pivot2 = GPM_log_ratio_SD(rSampleMeanLogScale2, rSampleSDLogScale2, N2, U2, Z2)
                 # Equation 2, generalized pivotal statistics
                 pivot_statistics = np.log(Pivot1) - np.log(Pivot2)
 
-                # Calculate ln ratio and SE ln ratio by percentile and Z statistics, Equation 4 and 5
+                # Calculate ln ratio and SE ln ratio by percentile and Z statistics
                 ln_ratio = pd.Series(pivot_statistics).quantile(.5)
                 se_ln_ratio = (pd.Series(pivot_statistics).quantile(.75) - pd.Series(pivot_statistics).quantile(.25))/(norm.ppf(.75) - norm.ppf(.25))
-                
-                # Calculate the confidence intervals with z_score of alpha = 0.05, Equation 6
+                # Calculate the confidence intervals with z_score
                 lower_bound = ln_ratio - z_score * se_ln_ratio
                 upper_bound = ln_ratio + z_score * se_ln_ratio   
                 
                 dict_results['ln_ratio'].append(ln_ratio)
                 dict_results['se_ln_ratio'].append(se_ln_ratio)
-                dict_results['coverage'].append(int((lower_bound <= 0) and (upper_bound >= 0)))
+                dict_results['coverage'].append((lower_bound <= 0) and (upper_bound >= 0))
             
             end_time = datetime.now()
-            print(f'MoM={method_of_moments} N={N1} CV={CV1} percentage coverage: {np.mean(dict_results["coverage"])}') # print out the percentage of coverage
+            print(f'MoM={MoM} N={N1} CV={CV1} percentage coverage: {np.mean(dict_results["coverage"])}') # print out the percentage of coverage
             
             
             output_dir = f"GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
-            print('csv save to ' + output_dir + f'_{method_of_moments}.csv')
-            pd.DataFrame(dict_results).to_csv(output_dir + f'_{method_of_moments}.csv')
+            print('csv save to ' + output_dir + f'_{MoM}.csv')
+            pd.DataFrame(dict_results).to_csv(output_dir + f'_{MoM}.csv')
 

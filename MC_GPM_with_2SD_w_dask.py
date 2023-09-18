@@ -74,7 +74,7 @@ class SimulPivotMC(object):
             
             df = df.apply(self.Mean_SD, meta=('float64', 'float64')) # generate sample mean and SD in Log scale using Sample_Mean_SD (above)
 
-        elif method_of_moments in ['first_two_moment', 'higher_orders_of_moments']:
+        elif method_of_moments in ['first_two_moment', 'higher_orders_of_moments', 'higher_orders_of_moments_mean']:
             # generate log-normal distribution, using mean of rMeanLogScale and standard deviation of rSDLogScale
             df['rSampleOfRandoms'] = df.apply(self.Sample_inv_normal, args=('Seeds',), axis=1).apply(lambda x: [np.exp(item) for item in x])
             df_record = df
@@ -89,6 +89,10 @@ class SimulPivotMC(object):
             elif method_of_moments == 'higher_orders_of_moments':
                 
                 df = df.apply(self.higher_orders_of_moments, args=(0,1,2,3), meta=('float64', 'float64')) # generate sample mean and SD in Log scale using Mean_SD_higgins1 (above)
+            
+            elif method_of_moments == 'higher_orders_of_moments_mean':
+                
+                df = df.apply(self.higher_orders_of_moments_mean, args=(0,1,2,3), meta=('float64', 'float64')) # generate sample mean and SD in Log scale using Mean_SD_higgins1 (above)
        
         df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
         
@@ -132,8 +136,8 @@ class SimulPivotMC(object):
         SampleMean2 = row[col_SampleMean2]
         SampleSD2 = row[col_SampleSD2]
 
-        rSampleMeanLogScale1, rSampleSDLogScale1, _ = self.transform_from_raw_to_log_mean_SD(self.N1, SampleMean1, SampleSD1)
-        rSampleMeanLogScale2, rSampleSDLogScale2, _ = self.transform_from_raw_to_log_mean_SD(self.N2, SampleMean2, SampleSD2)
+        rSampleMeanLogScale1, rSampleSDLogScale1, _, _ = self.transform_from_raw_to_log_mean_SD(self.N1, SampleMean1, SampleSD1)
+        rSampleMeanLogScale2, rSampleSDLogScale2, _, _ = self.transform_from_raw_to_log_mean_SD(self.N2, SampleMean2, SampleSD2)
                    
         return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2 #, rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
 
@@ -145,10 +149,24 @@ class SimulPivotMC(object):
         SampleMean2 = row[col_SampleMean2]
         SampleSD2 = row[col_SampleSD2]
         
-        rSampleMeanLogScale1, _, rSampleSDLogScale1 = self.transform_from_raw_to_log_mean_SD(self.N1, SampleMean1, SampleSD1)
-        rSampleMeanLogScale2, _, rSampleSDLogScale2 = self.transform_from_raw_to_log_mean_SD(self.N2, SampleMean2, SampleSD2)
+        rSampleMeanLogScale1, _, rSampleSDLogScale1, _ = self.transform_from_raw_to_log_mean_SD(self.N1, SampleMean1, SampleSD1)
+        rSampleMeanLogScale2, _, rSampleSDLogScale2, _ = self.transform_from_raw_to_log_mean_SD(self.N2, SampleMean2, SampleSD2)
 
         return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2 #, rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
+
+    def higher_orders_of_moments_mean(self, row, col_SampleMean1, col_SampleSD1, col_SampleMean2, col_SampleSD2):#using Equation 7 and 9
+        
+        SampleMean1 = row[col_SampleMean1]
+        SampleSD1 = row[col_SampleSD1]
+
+        SampleMean2 = row[col_SampleMean2]
+        SampleSD2 = row[col_SampleSD2]
+        
+        _, _, rSampleSDLogScale1, rSampleMeanLogScale1 = self.transform_from_raw_to_log_mean_SD(self.N1, SampleMean1, SampleSD1)
+        _, _, rSampleSDLogScale2, rSampleMeanLogScale2 = self.transform_from_raw_to_log_mean_SD(self.N2, SampleMean2, SampleSD2)
+
+        return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2 #, rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
+
 
     #Equation 7, 8, and 9
     def transform_from_raw_to_log_mean_SD(self, N, Mean, SD):
@@ -161,7 +179,8 @@ class SimulPivotMC(object):
         var_sx2 = (1/N) * exp(4*MeanLogScale_1) * (exp(8*SDLogScale_1**2) - 4*exp(5*SDLogScale_1**2) - exp(4*SDLogScale_1**2) + 8*exp(3*SDLogScale_1**2) - 4*exp(2*SDLogScale_1**2))
         var_B_z = var_x * dz_dmean**2 + 2 * cov_x_sx2 * dz_dmean * dz_dsx2 + var_sx2 * dz_dsx2**2
         SDLogScale_2 = sqrt(N * var_B_z)   #SD in log scale, Equation 9
-        return MeanLogScale_1, SDLogScale_1, SDLogScale_2    
+        MeanLogScale_2 = abs(Mean - exp(MeanLogScale_1 + (SDLogScale_2**2)/2)) / Mean   #Mean
+        return MeanLogScale_1, SDLogScale_1, SDLogScale_2, MeanLogScale_2
     
     def GPM_log_ratio_SD(self, row, col_SampleMeanLog1, col_SampleSDLog1, col_SampleMeanLog2, col_SampleSDLog2):  # Equation 2 and 3 
 
@@ -201,11 +220,11 @@ class SimulPivotMC(object):
         return int(intervals_include_zero)  # 1 as True, 0 as False, check_tolerance
     
 if __name__ == '__main__':
-    nMonteSim = 1 # nMonte
-    for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
+    nMonteSim = 100000 # nMonte
+    for method_of_moments in ['first_two_moment','no_moments']:#,'higher_orders_of_moments', 'higher_orders_of_moments_mean']:
         print(method_of_moments)
-        for N in [15]:
-            for CV in [0.3]:
+        for N in [15, 25, 50]:
+            for CV in [0.15, 0.3, 0.5]:
                 start_time = datetime.now() # record the datetime at the start
                 print('start_time:', start_time) # print the datetime at the start
                 print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV_{CV}_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}_{method_of_moments}")
