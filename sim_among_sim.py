@@ -9,10 +9,10 @@ from scipy.stats import norm
 from datetime import datetime
 
 
-def making_random_pick(seed_unique):
+def making_random_pick(seed_unique, nSample):
     seed(seed_unique)
     df_rand = pd.DataFrame({'index_':range(100000),'rand':rand(100000)})
-    return df_rand.sort_values(by='rand',ascending=True).iloc[:10,0].tolist()
+    return df_rand.sort_values(by='rand',ascending=True).iloc[:nSample,0].tolist()
 
 def sample_weighted_ave_se_interval_include(list_choose_no):
     sum_wi_Ti, sum_wi_ = 0, 0
@@ -79,10 +79,10 @@ for filename in matching_files:
         data['N'].append(filename_frag[5])
         data['CV'].append(filename_frag[7])
         data['nSample'].append(nSample)
-        nSim = int(len(df)/nSample) #10000
+        nSim = 10000 #int(len(df)/nSample) 
 
         df_for_dd = pd.DataFrame({'seed_':range(seed_, seed_ + nSim)})
-        df_for_dd = df_for_dd['seed_'].apply(making_random_pick)
+        df_for_dd = df_for_dd['seed_',nSample].apply(making_random_pick)
         ddf = dd.from_pandas(df_for_dd, npartitions=30)
         ddf= ddf.apply(sample_weighted_ave_se_interval_include, meta=('float64', 'float64'))
         df_record = pd.DataFrame(ddf.compute().tolist(), columns=['weighted_ave', 'weighted_se', 'intervals_include_zero'])
