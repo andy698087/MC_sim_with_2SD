@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from determine_type_I_error_module import SimulPivotMC
 from datetime import datetime
+import _osx_support
 
 # Define the directory where your text files are located
 directory = "C:/Users/User/MC-sim/GPM_MC_nMonte_100000_MoM_compare"
