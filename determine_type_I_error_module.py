@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 import numpy as np
 from scipy.stats import norm, chi2
@@ -94,19 +92,19 @@ class SimulPivotMC(object):
         result = np.log(Pivot1) - np.log(Pivot2)
         # print('result:', result)
         # pd.DataFrame(result).to_csv('result_view.csv')
-        len_result = len(result)
+
         # Calculate ln ratio and SE ln ratio by percentile and Z statistics
-        ln_ratio = np.sort(result)[round(len_result*0.5)]
+        ln_ratio = pd.Series(result).quantile(.5)
         # print('ln_ratio:',ln_ratio)
-        se_ln_ratio = (np.sort(result)[round(len_result*0.75)] - np.sort(result)[round(len_result*0.25)])/( 2 * norm.ppf(0.75))
+        se_ln_ratio = (pd.Series(result).quantile(.75) - pd.Series(result).quantile(.25))/( 2 * norm.ppf(0.75))
         # print('se_ln_ratio:',se_ln_ratio)
         # Calculate the confidence intervals with z_score
         lower_bound = ln_ratio - self.z_score * se_ln_ratio
         upper_bound = ln_ratio + self.z_score * se_ln_ratio   
         # print('lower and upper bound with z_score, ln ratio and SE:',lower_bound, upper_bound)
         
-        percentile_2_5 = np.sort(result)[round(len_result*0.925)]
-        percentile_97_5 = np.sort(result)[round(len_result*0.975)]
+        percentile_2_5 = pd.Series(result).quantile(.025)
+        percentile_97_5 = pd.Series(result).quantile(.975)
 
         # return the lower and upper bound for determine the confidence intervals
         return lower_bound, upper_bound, ln_ratio, se_ln_ratio, percentile_2_5, percentile_97_5, 
@@ -213,17 +211,17 @@ class SimulPivotMC(object):
         return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2 #, rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
     
     def taylor(self, N, Mean, SD):
-        D5 = log(Mean) - (1/2) * log(1 + (SD/N)**2)   #Mean
-        E5 = sqrt(log((SD/Mean)**2 + 1))   #SD
-        F5 = (SD**2) / N
-        G5 = (1/Mean) + (SD**2) / (Mean * ((SD**2) + (Mean**2)))
-        H5 = (1/N) * exp(3*D5) * (exp(9*(E5**2)/2) - 3*exp(5*(E5**2)/2) + 2*exp(3*(E5**2)/2))
-        I5 = -1 / (2 * ((SD**2) + (Mean**2)))
-        J5 = (1/N) * exp(4*D5) * (exp(8*E5**2) - 4*exp(5*E5**2) - exp(4*E5**2) + 8*exp(3*E5**2) - 4*exp(2*E5**2))
-        K5 = F5 * G5**2 + 2 * H5 * G5 * I5 + J5 * I5**2
-        L5 = sqrt(N * K5)   #SD
-        M5 = abs(Mean - exp(D5 + (L5**2)/2)) / Mean   #Mean
-        return L5, M5
+        MeanLogScale_1 = log(Mean) - (1/2) * log(1 + (SD/N)**2)   #Mean
+        SDLogScale_1 = sqrt(log((SD/Mean)**2 + 1))   #SD
+        var_x = (SD**2) / N
+        dz_dmean = (1/Mean) + (SD**2) / (Mean * ((SD**2) + (Mean**2)))
+        cov_x_sx2 = (1/N) * exp(3*MeanLogScale_1) * (exp(9*(SDLogScale_1**2)/2) - 3*exp(5*(SDLogScale_1**2)/2) + 2*exp(3*(SDLogScale_1**2)/2))
+        dz_dsx2 = -1 / (2 * ((SD**2) + (Mean**2)))
+        var_sx2 = (1/N) * exp(4*MeanLogScale_1) * (exp(8*SDLogScale_1**2) - 4*exp(5*SDLogScale_1**2) - exp(4*SDLogScale_1**2) + 8*exp(3*SDLogScale_1**2) - 4*exp(2*SDLogScale_1**2))
+        var_B_z = var_x * dz_dmean**2 + 2 * cov_x_sx2 * dz_dmean * dz_dsx2 + var_sx2 * dz_dsx2**2
+        SDLogScale_2 = sqrt(N * var_B_z)   #SD
+        MeanLogScale_2 = abs(Mean - exp(MeanLogScale_1 + (SDLogScale_2**2)/2)) / Mean   #Mean
+        return SDLogScale_2, MeanLogScale_2
 
     def Coverage(self, row, lower_bound, upper_bound): #nMonte = 50000, 
         # Check how many confidence intervals include 0
