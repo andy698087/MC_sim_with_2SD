@@ -4,10 +4,10 @@ import re
 from math import sqrt
 
 # Define the directory where your text files are located
-directory = "C:/Users/User/MC-sim/GPM_MC_nMonte_100000_MoM_compare"
+directory = "C:/Users/User/MC_sim_2SD/GPM_MC_2SD_higher_orders_2_compare_20230916"
 
 # Get a list of files that match the pattern in the directory
-matching_files = [file for file in os.listdir(directory) if file.startswith("GPM_MC_nMonte_100000_N1") and file.endswith(".csv")]
+matching_files = [file for file in os.listdir(directory) if file.startswith("GPM_MC_nMonte_100000_N") and file.endswith(".csv")]
 
 # Initialize an empty list to store data from all files
 
@@ -15,15 +15,15 @@ data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'mean_intervals_i
 # Loop through the matching files and extract data
 for filename in matching_files:
     filename_frag = filename.rstrip('.csv').split('_')
-    if filename_frag[-1] == 'noMethodOfMoments' or filename_frag[-1] == 'False':
-        data['MethodOfMoments'].append('No_MethodOfMoments')
-    elif filename_frag[-1] == 'Higgins1':
-        data['MethodOfMoments'].append('Higgins1')
-    elif filename_frag[-1] == 'Higgins2':
-        data['MethodOfMoments'].append('Higgins2')
-    else:
-        data['MethodOfMoments'].append('Orignal_MethodOfMoments')
-
+    # if filename_frag[-1] == 'noMethodOfMoments' or filename_frag[-1] == 'False':
+    #     data['MethodOfMoments'].append('No_MethodOfMoments')
+    # elif filename_frag[-1] == 'Higgins1':
+    #     data['MethodOfMoments'].append('Higgins1')
+    # elif filename_frag[-1] == 'Higgins2':
+    #     data['MethodOfMoments'].append('Higgins2')
+    # else:
+    #     data['MethodOfMoments'].append('Orignal_MethodOfMoments')
+    data['MethodOfMoments'].append('_'.join(filename_frag[9:]))
     data['nMonte'].append(filename_frag[3])
     data['N'].append(filename_frag[5])
     data['CV'].append(filename_frag[7])
@@ -47,6 +47,6 @@ for filename in matching_files:
 df = pd.DataFrame(data)
 df[df.columns[1:]] = df[df.columns[1:]].astype(float)
 # # Define the filename for your Excel file
-df.to_csv("From_text_GPM_MC_nMonte_100000_N_Higgins12MoMNo_SEmean.csv")
+df.to_csv("From_text_GPM_MC_nMonte_100000_N_higher_orders_2_compare_20230916_SEmean.csv")
 
 quit()

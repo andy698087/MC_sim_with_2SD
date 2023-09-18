@@ -20,10 +20,10 @@ import re
 pattern = r'\((.*?)\)'
 
 # Define the directory where your text files are located
-directory = "C:/Users/User/MC-sim/GPM_MC_nMonte_100000_MoM_compare"
+directory = "C:/Users/User/MC_sim_2SD/GPM_MC_2SD_higher_orders_2_compare_20230916"
 
 # Get a list of files that match the pattern in the directory
-matching_files = [file for file in os.listdir(directory) if file.startswith("GPM_MC_nMonte_100000_N1") and file.endswith(".txt")]
+matching_files = [file for file in os.listdir(directory) if file.startswith("GPM_MC_nMonte_100000_N") and file.endswith(".txt")]
 
 # Initialize an empty list to store data from all files
 
@@ -35,16 +35,16 @@ for filename in matching_files:
     with open(file_path, 'r') as file:
         lines = file.readlines()
 
-    if filename.split('_')[-1] == 'noMethodOfMoments.txt' or filename.split('_')[-1] == 'False.txt':
-        data['MethodOfMoments'].append('No_MethodOfMoments')
-    elif filename.split('_')[-1] == 'Higgins1.txt':
-        data['MethodOfMoments'].append('Higgins1')
-    elif filename.split('_')[-1] == 'Higgins2.txt':
-        data['MethodOfMoments'].append('Higgins2')
-    else:
-        data['MethodOfMoments'].append('Orignal_MethodOfMoments')
+    # if  == 'noMethodOfMoments.txt' or filename.split('_')[-1] == 'False.txt':
+    #     data['MethodOfMoments'].append('No_MethodOfMoments')
+    # elif filename.split('_')[-1] == 'Higgins1.txt':
+    #     data['MethodOfMoments'].append('Higgins1')
+    # elif filename.split('_')[-1] == 'Higgins2.txt':
+    #     data['MethodOfMoments'].append('Higgins2')
+    # else:
+    #     data['MethodOfMoments'].append('Orignal_MethodOfMoments')
     # Extract relevant information from each file
-
+    data['MethodOfMoments'].append('_'.join(filename.rstrip('.txt').split('_')[9:]))
     for n, line in enumerate(lines):
         if n == 4:
             key_values = line.strip().split('; ')
@@ -87,7 +87,7 @@ for filename in matching_files:
 df = pd.DataFrame(data)
 df[df.columns[1:]] = df[df.columns[1:]].astype(float)
 # # Define the filename for your Excel file
-excel_filename = "From_text_GPM_MC_nMonte_100000_N1_Higgins12MoMNo.xlsx"
+excel_filename = "From_text_GPM_MC_nMonte_100000_N_higher_orders_2_compare_20230916.xlsx"
 
 # # Create a Pandas Excel writer using XlsxWriter as the engine
 # excel_writer = pd.ExcelWriter(excel_filename, engine="xlsxwriter")
