@@ -48,7 +48,7 @@ random_numbers2_1 = np.random.rand(nSimulForPivot)
 np.random.seed(seed_value - 4)
 random_numbers2_2 = np.random.rand(nSimulForPivot)
 
-# Method of moments, for Table 1, 2, and 3, respectively
+# for Table 1, 2, and 3, respectively
 for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
 
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
@@ -128,17 +128,16 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
                 # Equation 2, generalized pivotal statistics
                 pivot_statistics = np.log(Pivot1) - np.log(Pivot2)
 
-                # Calculate ln ratio and SE ln ratio by percentile and Z statistics, Equation 4 and 5
+                # Calculate ln ratio and SE ln ratio by percentile and Z statistics
                 ln_ratio = pd.Series(pivot_statistics).quantile(.5)
                 se_ln_ratio = (pd.Series(pivot_statistics).quantile(.75) - pd.Series(pivot_statistics).quantile(.25))/(norm.ppf(.75) - norm.ppf(.25))
-                
-                # Calculate the confidence intervals with z_score of alpha = 0.05, Equation 6
+                # Calculate the confidence intervals with z_score
                 lower_bound = ln_ratio - z_score * se_ln_ratio
                 upper_bound = ln_ratio + z_score * se_ln_ratio   
                 
                 dict_results['ln_ratio'].append(ln_ratio)
                 dict_results['se_ln_ratio'].append(se_ln_ratio)
-                dict_results['coverage'].append(int((lower_bound <= 0) and (upper_bound >= 0)))
+                dict_results['coverage'].append((lower_bound <= 0) and (upper_bound >= 0))
             
             end_time = datetime.now()
             
