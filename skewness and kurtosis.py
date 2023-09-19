@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import kurtosis, skew
+from scipy.stats import kurtosis, skew, kurtosistest
 from scipy.stats import kstest, uniform, norm
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ matching_files = [file for file in os.listdir(directory) if file.startswith("GPM
 # matching_files = ['GPM_MC_nMonte_100000_N_15_CV_0.5_20230916034310_higher_orders_of_moments_mean.csv']
 
 
-data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'parameters':[], 'p_value':[], 'skewness':[], 'kurtosis':[]}
+data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [], 'parameters':[], 'p_value':[], 'skewness':[], 'kurtosis':[], 'kurtosistest_p_value': []}
 # Loop through the matching files and extract data
 for filename in matching_files:
 
@@ -55,7 +55,8 @@ for filename in matching_files:
     data['p_value'].append(p_value)
     data['skewness'].append(skew(Sries_ln_ratio_uniform))
     data['kurtosis'].append(kurtosis(Sries_ln_ratio_uniform))
-
+    res = kurtosistest(Sries_ln_ratio_uniform)
+    data['kurtosistest_p_value'].append(res.pvalue)
 
 end_time = datetime.now() #            
 output_dir = f"Normality_test_nMonte_ln_ratio_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
