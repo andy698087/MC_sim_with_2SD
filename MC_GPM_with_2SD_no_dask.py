@@ -25,7 +25,7 @@ def transform_from_raw_to_log_mean_SD(Mean, SD):
 # number of Monte Carlo Simulations
 nMonte = 1
 
-# Calculate z-score for alpha = 0.05, 
+# Calculate z-score for alpha = 0.05, gi
 # ppf is the percent point function that is inverse of cumulative distribution function
 z_score = norm.ppf(1 - 0.05 / 2)        
 
@@ -137,7 +137,7 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
                 
                 dict_results['ln_ratio'].append(ln_ratio)
                 dict_results['se_ln_ratio'].append(se_ln_ratio)
-                dict_results['coverage'].append((lower_bound <= 0) and (upper_bound >= 0))
+                dict_results['coverage'].append((lower_bound < 0) and (upper_bound > 0))
             
             end_time = datetime.now()
             

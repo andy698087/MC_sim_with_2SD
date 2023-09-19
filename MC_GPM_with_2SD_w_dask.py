@@ -205,7 +205,7 @@ class SimulPivotMC(object):
         lower_bound = ln_ratio - self.z_score * se_ln_ratio
         upper_bound = ln_ratio + self.z_score * se_ln_ratio   
 
-        intervals_include_zero = (lower_bound <= 0) and (upper_bound >= 0)
+        intervals_include_zero = (lower_bound < 0) and (upper_bound > 0)
         # 1 as True, 0 as False, check coverage
         return int(intervals_include_zero)  
     
