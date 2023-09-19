@@ -17,8 +17,8 @@ def transform_from_raw_to_log_mean_SD(Mean, SD):
     MeanLogScale_1 = log(Mean/sqrt(1 + CVsq)) 
     #SD in log scale, Equation 8
     SDLogScale_1 = sqrt(log((CVsq + 1)))
-    SDLogScale_2 = sqrt(CVsq * (1 + CVsq/(1 + CVsq))**2 - (1 + CVsq/(1 + CVsq)) * ((1 + CVsq)**2 - 3 + 2/(1 + CVsq)) + (1/4) * ((1 + CVsq)**4 - 4*(1 + CVsq) - 1 + 8/(1 + CVsq) - 4/((1 + CVsq)**2))
-)   #SD in log scale, Equation 9
+    SDLogScale_2 = sqrt(CVsq * (1 + CVsq/(1 + CVsq))**2 - (1 + CVsq/(1 + CVsq)) * ((1 + CVsq)**2 - 3 + 2/(1 + CVsq)) + (1/4) * ((1 + CVsq)**4 - 4*(1 + CVsq) - 1 + 8/(1 + CVsq) - 4/((1 + CVsq)**2)))
+    #SD in log scale, Equation 9
     return MeanLogScale_1, SDLogScale_1, SDLogScale_2
 
 
@@ -89,7 +89,8 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
                 np.random.seed(seed_)
                 # generate log-normal distribution, using mean of rMeanLogScale and standard deviation of rSDLogScale
                 rSampleOfRandoms = [norm.ppf(i,loc=rMeanLogScale1, scale=rSDLogScale1) for i in np.random.rand(N1+N2)]
-                if method_of_moments == 'no_moments': #using no method of moments 
+                #using no method of moments 
+                if method_of_moments == 'no_moments': 
                     rSampleOfRandoms1 = rSampleOfRandoms[:N1]
                     rSampleOfRandoms2 = rSampleOfRandoms[N1:N1+N2] 
                     # the mean of rSampleOfRandoms1, notation "z_i"
