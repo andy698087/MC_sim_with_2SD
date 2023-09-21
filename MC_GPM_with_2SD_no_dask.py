@@ -14,7 +14,7 @@ def transform_from_raw_to_log_mean_SD(Mean, SD):
     CV = SD/Mean
     CVsq = CV**2
     #Mean in log scale, Equation 7
-    MeanLogScale_1 = log(Mean/sqrt(1 + CVsq)) 
+    MeanLogScale_1 = log(Mean/sqrt(CVsq + 1)) 
     #SD in log scale, Equation 8
     SDLogScale_1 = sqrt(log((CVsq + 1)))
     SDLogScale_2 = sqrt(CVsq * (1 + CVsq/(1 + CVsq))**2 - (1 + CVsq/(1 + CVsq)) * ((1 + CVsq)**2 - 3 + 2/(1 + CVsq)) + (1/4) * ((1 + CVsq)**4 - 4*(1 + CVsq) - 1 + 8/(1 + CVsq) - 4/((1 + CVsq)**2)))

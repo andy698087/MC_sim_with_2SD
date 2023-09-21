@@ -1,4 +1,4 @@
-#There are two code files. This one, using the multithread, runs fast (about 10mins for each 100,000 simulations). It obtains results identical to at least 16 digits as the one using no multithread.
+#This one, using the multithread, runs quickly (about 10 min for each 100,000 simulations). It obtains results identical to at least 16 digits as the one using no multithread.
 import pandas as pd
 import numpy as np
 from scipy.stats import norm, chi2
@@ -164,7 +164,7 @@ class SimulPivotMC(object):
         CV = SD/Mean
         CVsq = CV**2
         #Mean in log scale, Equation 7
-        MeanLogScale_1 = log(Mean/sqrt(1 + CVsq)) 
+        MeanLogScale_1 = log(Mean/sqrt(CVsq + 1)) 
         #SD in log scale, Equation 8
         SDLogScale_1 = sqrt(log((CVsq + 1)))
         SDLogScale_2 = sqrt(CVsq * (1 + CVsq/(1 + CVsq))**2 - (1 + CVsq/(1 + CVsq)) * ((1 + CVsq)**2 - 3 + 2/(1 + CVsq)) + (1/4) * ((1 + CVsq)**4 - 4*(1 + CVsq) - 1 + 8/(1 + CVsq) - 4/((1 + CVsq)**2))
