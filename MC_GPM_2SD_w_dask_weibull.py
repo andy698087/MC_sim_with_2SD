@@ -219,6 +219,8 @@ class SimulPivotMC(object):
             if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
                 # print('optimized res.x:', res.x)      
                 # print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
+                # print("MeanWeibull, VarWeibull:", self.MeanWeibull, self.VarWeibull)
+                # print("SampleMeanLogNorm, SampleVarLogNorm:", SampleMeanLogNorm, SampleVarLogNorm)
                 shape_parameter, scale_parameter = res.x 
                 self.x0_pre = res.x                          
                 break
@@ -372,7 +374,7 @@ if __name__ == '__main__':
                 
             output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
             
-            output_dir = f"Weibull_Weibull_GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
+            output_dir = f"Weibull_GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
             
             # save the results to the csv
             print('csv save to ' + output_dir + f'_.csv')
