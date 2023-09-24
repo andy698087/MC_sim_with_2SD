@@ -177,9 +177,21 @@ class SimulPivotMC(object):
     def sum_diff_weibull_lognorm(self, params, SampleMeanLogNorm, SampleVarianceLogNorm):
         shape_parameter, scale_parameter = abs(params)
         
-        self.MeanWeibull, self.VarWeibull = self.theory_Weibull_MeanVar(shape_parameter, scale_parameter)
+        MeanWeibull, VarWeibull = self.theory_Weibull_MeanVar(shape_parameter, scale_parameter)
         
-        return self.loss_func(self.MeanWeibull, self.VarWeibull, SampleMeanLogNorm, SampleVarianceLogNorm)     
+        diff = abs(MeanWeibull - SampleMeanLogNorm)+abs(VarWeibull - SampleVarianceLogNorm)
+        diff_mean = abs(MeanWeibull - SampleMeanLogNorm)
+        diff_var = abs(VarWeibull - SampleVarianceLogNorm)
+        if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
+            self.dict_WeibullParameter_diff['SampleMeanLogNorm'].append(SampleMeanLogNorm)
+            self.dict_WeibullParameter_diff['SampleVarianceLogNorm'].append(SampleVarianceLogNorm)
+            self.dict_WeibullParameter_diff['shape_parameter'].append(shape_parameter)
+            self.dict_WeibullParameter_diff['scale_parameter'].append(scale_parameter)
+            self.dict_WeibullParameter_diff['diff'].append(diff)
+            self.dict_WeibullParameter_diff['diff_mean'].append(diff_mean)
+            self.dict_WeibullParameter_diff['diff_var'].append(diff_var)
+        
+        return self.loss_func(MeanWeibull, VarWeibull, SampleMeanLogNorm, SampleVarianceLogNorm)     
 
     def theory_Weibull_MeanVar(self, shape_parameter, scale_parameter):
         theoryMeanWeibull = scale_parameter * gamma(1 + 1/shape_parameter) # + location_parameter
@@ -203,6 +215,7 @@ class SimulPivotMC(object):
         SampleMeanLogNorm, SampleVarLogNorm = row[col_SampleMeanLogNorm], row[col_SampleVarLogNorm]
         # print('SampleMeanLogNorm, SampleVarLogNorm:',SampleMeanLogNorm, SampleVarLogNorm )
         x0 = self.x0_pre
+        self.dict_WeibullParameter_diff = {'SampleMeanLogNorm': [], 'SampleVarianceLogNorm': [], 'shape_parameter': [], 'scale_parameter': [],  'diff': [], 'diff_mean': [], 'diff_var': []}
         bounds_ = [(0.5,None),(0.1,None)]
         options_ = {'ftol': 1e-7, 'xtol': 1e-10, 'eta': 0.01/(nIter//100 + 1), 'disp': False}
         
@@ -212,18 +225,25 @@ class SimulPivotMC(object):
             res = minimize(self.sum_diff_weibull_lognorm, x0, args=(SampleMeanLogNorm, SampleVarLogNorm), method='TNC', bounds=bounds_, options=options_, jac = '3-point')
             # shape_parameter, scale_parameter = res.x
 
-            diff = abs(self.MeanWeibull - SampleMeanLogNorm)+abs(self.VarWeibull - SampleVarLogNorm)
-            diff_mean = abs(self.MeanWeibull - SampleMeanLogNorm)
-            diff_var = abs(self.VarWeibull - SampleVarLogNorm)
-            # print('diff:',diff)
-            if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
-                # print('optimized res.x:', res.x)      
-                # print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
-                # print("MeanWeibull, VarWeibull:", self.MeanWeibull, self.VarWeibull)
-                # print("SampleMeanLogNorm, SampleVarLogNorm:", SampleMeanLogNorm, SampleVarLogNorm)
-                shape_parameter, scale_parameter = res.x 
-                self.x0_pre = res.x                          
-                break
+            # diff = abs(self.MeanWeibull - SampleMeanLogNorm)+abs(self.VarWeibull - SampleVarLogNorm)
+            # diff_mean = abs(self.MeanWeibull - SampleMeanLogNorm)
+            # diff_var = abs(self.VarWeibull - SampleVarLogNorm)
+            # # print('diff:',diff)
+            extract_df = pd.DataFrame(self.dict_WeibullParameter_diff)
+            extract_df = extract_df[(extract_df['SampleMeanLogNorm'] == SampleMeanLogNorm) & (extract_df['SampleVarianceLogNorm'] == SampleVarLogNorm)]
+            if len(extract_df) > 0:
+                extract_df = extract_df.loc[extract_df['diff'].idxmin()]
+                diff = extract_df['diff']
+                diff_mean = extract_df['diff_mean']
+                diff_var = extract_df['diff_var']
+                if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
+                    # print('optimized res.x:', res.x)      
+                    # print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
+                    # print("MeanWeibull, VarWeibull:", self.MeanWeibull, self.VarWeibull)
+                    # print("SampleMeanLogNorm, SampleVarLogNorm:", SampleMeanLogNorm, SampleVarLogNorm)
+                    shape_parameter, scale_parameter = res.x 
+                    self.x0_pre = res.x                          
+                    break
             else:
                 np.random.seed(self.seed_value+nIter)
                 random_ = (1 + (np.random.randint(1,high=10)-5)/100)
@@ -347,11 +367,11 @@ class SimulPivotMC(object):
         
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 10000
+    nMonteSim = 1000
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [15, 25, 50]: 
+    for N in [25]:#[15, 25, 50]: 
         # coefficient of variation, we choose 0.15, 0.3, 0.5
-        for CV in [0.15, 0.3, 0.5]: 
+        for CV in [0.3]:#[0.15, 0.3, 0.5]: 
             # record the datetime at the start
             start_time = datetime.now() 
             print('start_time:', start_time) 
