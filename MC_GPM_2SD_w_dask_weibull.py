@@ -223,9 +223,9 @@ if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100000
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [25]: 
+    for N in [15, 25 50,]: 
         # coefficient of variation, we choose 0.15, 0.3, 0.5
-        for CV in [0.3]: 
+        for CV in [0.15, 0.3, 0.5]: 
             # record the datetime at the start
             start_time = datetime.now() 
             print('start_time:', start_time) 
