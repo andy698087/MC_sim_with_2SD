@@ -71,11 +71,11 @@ class SimulPivotMC(object):
         # put the list of seeds into a table (a.k.a DataFrame) with one column named "Seeds"  
         print('Sample_Weibull')
         df = pd.DataFrame({'Seeds':list_seeds}) 
-        df['rSampleOfRandomsLogNorm'] = df.apply(self.Sample_Weibull, args=('Seeds',), axis=1)
+        df['rSampleOfRandomsWeibull'] = df.apply(self.Sample_Weibull, args=('Seeds',), axis=1)
         df_record = df
         # df = df['rSampleOfRandomsLogNorm'].copy()
         # put the table into dask, a progress that can parallel calculating each rows using multi-thread
-        df = dd.from_pandas(df['rSampleOfRandomsLogNorm'], npartitions=35) 
+        df = dd.from_pandas(df['rSampleOfRandomsWeibull'], npartitions=35) 
         meta = ('float64', 'float64')
         print('Mean_SD')
         # calculate sample mean and Var using Mean_SD
@@ -109,9 +109,9 @@ class SimulPivotMC(object):
 
 
     def Sample_Weibull(self, row, seed_):
-        # rSampleOfRandoms = weibull_min.rvs(self.shape_parameter, scale=self.scale_parameter, size=self.N1+self.N2, random_state = row[seed_])
-        np.random.seed(row[seed_])
-        rSampleOfRandoms = np.exp([(weibull_min.ppf(i, self.shape_parameter, loc=0, scale=self.scale_parameter)) for i in np.random.rand(self.N1+self.N2)] )
+        rSampleOfRandoms = weibull_min.rvs(self.shape_parameter, scale=self.scale_parameter, size=self.N1+self.N2, random_state = row[seed_])
+        # np.random.seed(row[seed_])
+        # rSampleOfRandoms = [(weibull_min.ppf(i, self.shape_parameter, scale=self.scale_parameter)) for i in np.random.rand(self.N1+self.N2)]
 
         return rSampleOfRandoms
 
@@ -221,11 +221,11 @@ class SimulPivotMC(object):
         
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 10000
+    nMonteSim = 10
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [15, 25, 50]: 
+    for N in [25]: 
         # coefficient of variation, we choose 0.15, 0.3, 0.5
-        for CV in [0.15, 0.3, 0.5]: 
+        for CV in [0.3]: 
             # record the datetime at the start
             start_time = datetime.now() 
             print('start_time:', start_time) 
