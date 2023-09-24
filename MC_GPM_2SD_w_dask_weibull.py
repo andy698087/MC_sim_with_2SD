@@ -219,6 +219,7 @@ class SimulPivotMC(object):
             if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
                 # print('optimized res.x:', res.x)      
                 # print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
+                shape_parameter, scale_parameter = res.x 
                 self.x0_pre = res.x                          
                 break
             else:
