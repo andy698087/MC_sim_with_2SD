@@ -240,8 +240,8 @@ class SimulPivotMC(object):
             diff_var = abs(theoryVarWeibull - SampleVarLogNorm)
             
             if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
-                print('optimized res.x:', res.x)      
-                print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
+                # print('optimized res.x:', res.x)      
+                # print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
                 self.x0_pre = res.x                          
                 break
             else:
@@ -271,7 +271,7 @@ class SimulPivotMC(object):
                 weight_ = abs(getattr(fun,'diff_var')/getattr(fun,'diff_mean')) * random_
         
         df_WeibullParameter_diff = pd.DataFrame(getattr(fun,'dict_WeibullParameter_diff'))
-        print("df_WeibullParameter_diff['diff'].min():", df_WeibullParameter_diff['diff'].min())
+        # print("df_WeibullParameter_diff['diff'].min():", df_WeibullParameter_diff['diff'].min())
         shape_parameter, scale_parameter = df_WeibullParameter_diff.loc[df_WeibullParameter_diff['diff'].idxmin()][['shape_parameter', 'scale_parameter']]
         return shape_parameter, scale_parameter
 
@@ -385,11 +385,11 @@ class SimulPivotMC(object):
         
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 1
+    nMonteSim = 1000
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [25]:#[15, 25, 50]: 
+    for N in [15, 25, 50]: 
         # coefficient of variation, we choose 0.15, 0.3, 0.5
-        for CV in [0.3]:#[0.15, 0.3, 0.5]: 
+        for CV in [0.15, 0.3, 0.5]: 
             # record the datetime at the start
             start_time = datetime.now() 
             print('start_time:', start_time) 
