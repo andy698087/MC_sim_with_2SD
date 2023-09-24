@@ -221,7 +221,7 @@ class SimulPivotMC(object):
         
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 10000
+    nMonteSim = 100000
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
     for N in [15, 25, 50]: 
         # coefficient of variation, we choose 0.15, 0.3, 0.5
