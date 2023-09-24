@@ -44,8 +44,8 @@ class weibull_and_lognorm(object):
         # print('MeanWeibull:',MeanWeibull)
         # print('VarWeibull:',VarWeibull)
         if diff < 1e-5 and diff_mean < 1e-6 and diff_var < 1e-6:
-            self.dict_WeibullParameter_diff['MeanLogScale'].append(MeanTimeScale)
-            self.dict_WeibullParameter_diff['VarLogScale'].append(VarTimeScale)
+            self.dict_WeibullParameter_diff['MeanTimeScale'].append(MeanTimeScale)
+            self.dict_WeibullParameter_diff['VarTimeScale'].append(VarTimeScale)
             self.dict_WeibullParameter_diff['shape_parameter'].append(shape_parameter)
             self.dict_WeibullParameter_diff['scale_parameter'].append(scale_parameter)
             self.dict_WeibullParameter_diff['MeanWeibull'].append(MeanWeibull)
@@ -68,7 +68,7 @@ class weibull_and_lognorm(object):
     def find_WeibullMeanVar(self):
         nIter = 0
         x0 = self.x0_pre
-        self.dict_WeibullParameter_diff = {'MeanLogScale': [], 'VarLogScale': [], 'shape_parameter': [], 'scale_parameter': [], 'MeanWeibull': [], 'VarWeibull': [], 'diff': [], 'diff_mean': [], 'diff_var': []}
+        self.dict_WeibullParameter_diff = {'MeanTimeScale': [], 'VarTimeScale': [], 'shape_parameter': [], 'scale_parameter': [], 'MeanWeibull': [], 'VarWeibull': [], 'diff': [], 'diff_mean': [], 'diff_var': []}
         bounds_ = [(0.5,None),(0.1,None)]
         options_ = {'ftol': 1e-8, 'xtol': 1e-10, 'eta': 0.01/(nIter//1000 + 1), 'disp': False}
         
@@ -123,7 +123,7 @@ class weibull_and_lognorm(object):
         return log(exp(abs(a1-b1))+  exp(weight_ *  abs(a2-b2))) +  (-log(a2/b2))
     
 
-weibull_params = {'N':[],'CV':[],'shape_parameter':[],'scale_parameter':[],'MeanLogScale': [], 'VarLogScale': [], 'shape_parameter': [], 'scale_parameter': [], 'MeanWeibull': [], 'VarWeibull': [], 'diff': [], 'diff_mean': [], 'diff_var': []}
+weibull_params = {'N':[],'CV':[],'shape_parameter':[],'scale_parameter':[],'MeanTimeScale': [], 'VarTimeScale': [], 'shape_parameter': [], 'scale_parameter': [], 'MeanWeibull': [], 'VarWeibull': [], 'diff': [], 'diff_mean': [], 'diff_var': []}
 for N in [15]: 
     # coefficient of variation, we choose 0.15, 0.3, 0.5
     for CV in [0.15, 0.3, 0.5]: 
@@ -135,14 +135,14 @@ for N in [15]:
         weibull_params['shape_parameter'].append(shape_parameter)
         weibull_params['scale_parameter'].append(scale_parameter)
         extract_df = getattr(fun, 'extract_df')
-        weibull_params['MeanLogScale'].append(extract_df['MeanLogScale'])
-        weibull_params['VarLogScale'].append(extract_df['VarLogScale'])
+        weibull_params['MeanTimeScale'].append(extract_df['MeanTimeScale'])
+        weibull_params['VarTimeScale'].append(extract_df['VarTimeScale'])
         weibull_params['MeanWeibull'].append(extract_df['MeanWeibull'])
         weibull_params['VarWeibull'].append(extract_df['VarWeibull'])
         weibull_params['diff'].append(extract_df['diff'])
         weibull_params['diff_mean'].append(extract_df['diff_mean'])
         weibull_params['diff_var'].append(extract_df['diff_var'])
-pd.DataFrame(weibull_params).to_csv('weibull_params1e-6.csv')
+pd.DataFrame(weibull_params).to_csv('weibull_params1e-6_2.csv')
 quit()
 
 
