@@ -7,51 +7,6 @@ from math import sqrt, log, exp, gamma
 import dask.dataframe as dd
 from scipy.optimize import minimize
 
-class weibull_and_lognorm(object):
-    def __init__(self, SampleMeanLogNorm, SampleVarianceLogNorm):
-
-        self.SampleMeanLogNorm = SampleMeanLogNorm
-        self.SampleVarianceLogNorm = SampleVarianceLogNorm
-        
-        # self.initial_shape_parameter = 10
-        # self.initial_scale_parameter = 1
-
-        # self.keep_shape_parameter = None
-        # self.keep_scale_parameter = None
-        self.nIter = 0
-        self.dict_WeibullParameter_diff = {'shape_parameter': [], 'scale_parameter': [],  'diff': []}
-    def sum_diff_weibull_lognorm(self, params):
-        # print('Main')
-        # self.keep_scale_parameter = scale_parameter
-        # shape_parameter = minimize_scalar(weibull_and_lognorm(25,1,0.3).sum_diff_weibull_lognorm_ShapeParam,  method = 'brent', bracket = [1,100], tol = 1e-6).x
-        self.nIter += 1
-        shape_parameter, scale_parameter = abs(params)
-        # print(f'shape_parameter: {shape_parameter}, scale_parameter: {scale_parameter}')
-        
-        TheoryMeanWeibull = scale_parameter * gamma(1 + 1/shape_parameter) # + location_parameter
-        TheoryVarWeibull = (scale_parameter ** 2) * (gamma(1 + 2/shape_parameter) - (gamma(1 + 1/shape_parameter)) ** 2)
-
-        # print(f'SampleMeanLogNorm: {self.SampleMeanLogNorm}, SampleVarianceLogNorm: {self.SampleVarianceLogNorm}')
-        # print(f'TheoryMeanWeibull: {TheoryMeanWeibull}, TheoryVarWeibull: {TheoryVarWeibull}')
-
-        self.diff = abs(TheoryMeanWeibull-self.SampleMeanLogNorm)+abs(TheoryVarWeibull-self.SampleVarianceLogNorm)
-        # print(f'abs diff: {self.diff}')
-
-        self.diff_mean = abs(TheoryMeanWeibull-self.SampleMeanLogNorm)
-        self.diff_var = abs(TheoryVarWeibull-self.SampleVarianceLogNorm)
-        
-        if self.diff < 1e-5 and self.diff_mean < 1e-4 and self.diff_var < 1e-4:
-            self.dict_WeibullParameter_diff['shape_parameter'].append(shape_parameter)
-            self.dict_WeibullParameter_diff['scale_parameter'].append(scale_parameter)
-            self.dict_WeibullParameter_diff['diff'].append(self.diff)
-            # self.dict_WeibullParameter_diff['diff_mean'].append(self.diff_mean)
-            # self.dict_WeibullParameter_diff['diff_var'].append(self.diff_var)
-
-        return self.loss_func(TheoryMeanWeibull, TheoryVarWeibull, self.SampleMeanLogNorm, self.SampleVarianceLogNorm)
-    
-    def loss_func(self, a1, a2, b1, b2, weight_=10):
-        return abs(a1-b1)+ weight_ * abs(a2-b2)
-        
 class SimulPivotMC(object):
     def __init__(self, nMonteSim, N, CVTimeScale):
         # number of Monte Carlo Simulation
@@ -69,7 +24,8 @@ class SimulPivotMC(object):
         self.CV2 = self.CV1
 
         # Mean in log scale, notation "μ_i" in the manuscript
-        self.rMeanLogScale1 = log(1)
+        MeanTimeScale = 1
+        self.rMeanLogScale1 = log(MeanTimeScale)
         # print('self.rMeanLogScale1:',self.rMeanLogScale1 )
         self.rMeanLogScale2 = self.rMeanLogScale1
         
@@ -77,7 +33,9 @@ class SimulPivotMC(object):
         self.rSDLogScale1 = sqrt(log(1 + self.CV1 ** 2)) 
         self.rSDLogScale2 = self.rSDLogScale1
         # print('self.rSDLogScale1:',self.rSDLogScale1)
-        self.x0_pre = [10,1]
+
+        df_weibull_params = pd.read_csv('weibull_params1e-6.csv')[['CV','shape_parameter','scale_parameter']]
+        self.shape_parameter, self.scale_parameter = df_weibull_params[df_weibull_params['CV']==CVTimeScale][['shape_parameter','scale_parameter']].iloc[0,:]
 
         # the number for pivot, the notation "m" in the manuscript
         nSimulForPivot = 100000-1
@@ -111,152 +69,50 @@ class SimulPivotMC(object):
         # the pre-determined list of seeds, using number of nMonte
         list_seeds = [i for i in range(self.seed_value, self.seed_value + self.nMonte)] 
         # put the list of seeds into a table (a.k.a DataFrame) with one column named "Seeds"  
-        print('Sample_inv_normal')
+        print('Sample_Weibull')
         df = pd.DataFrame({'Seeds':list_seeds}) 
-        df['rSampleOfRandomsLogNorm'] = df.apply(self.Sample_inv_normal, args=('Seeds',), axis=1)
+        df['rSampleOfRandomsLogNorm'] = df.apply(self.Sample_Weibull, args=('Seeds',), axis=1)
         df_record = df
         # df = df['rSampleOfRandomsLogNorm'].copy()
         # put the table into dask, a progress that can parallel calculating each rows using multi-thread
-        # df = dd.from_pandas(df['rSampleOfRandomsLogNorm'], npartitions=35) 
-        # meta = ('float64', 'float64')
-        print('Mean_Var')
+        df = dd.from_pandas(df['rSampleOfRandomsLogNorm'], npartitions=35) 
+        meta = ('float64', 'float64')
+        print('Mean_SD')
         # calculate sample mean and Var using Mean_SD
-        df = df['rSampleOfRandomsLogNorm'].apply(self.Mean_Var, args = (self.N1, self.N2))#, meta=meta)
-        # df_record[['LogNormMean1', 'LogNormVar1', 'LogNormMean2', 'LogNormVar2']] = df.compute().tolist()
-        df_record[['LogNormMean1', 'LogNormVar1', 'LogNormMean2', 'LogNormVar2']] = df.apply(lambda x: pd.Series(x))
+        df = df.apply(self.Mean_SD, meta=meta)
+        df_record[['WeibullMean1', 'WeibullSD1', 'WeibullMean2', 'WeibullSD2']] = df.compute().tolist()
+        # df_record[['LogNormMean1', 'LogNormVar1', 'LogNormMean2', 'LogNormVar2']] = df.apply(lambda x: pd.Series(x))
         # print(df_record)
         # print(df)
-        print('find_WeibullMeanVar')
-        df1 = df.apply(self.find_WeibullMeanVar, args = (0,1))#, meta=meta)
-        df2 = df.apply(self.find_WeibullMeanVar, args = (2,3))#, meta=meta)
         
-        # df_record[['shape_parameter1', 'scale_parameter1']] = df1.compute().tolist()
-        # compute().tolist()
-        df_record[['shape_parameter1', 'scale_parameter1']] = df1.apply(lambda x: pd.Series(x))
-        df_record[['shape_parameter2', 'scale_parameter2']] = df2.apply(lambda x: pd.Series(x))
-        print('Sample_Weibull')
-        df1 = df1.apply(self.Sample_Weibull, args = (0, 1, self.seed_value,))#, meta=meta)
-        df2 = df2.apply(self.Sample_Weibull, args = (0, 1, self.seed_value,))#, meta=meta)
-        print('Mean_Var')
-        df1 = df1.apply(self.Mean_Var, args = (self.N1,0))#, meta=meta)
-        df2 = df2.apply(self.Mean_Var, args = (self.N2,0))#, meta=meta)
-        
-        # df_record[['WeibullMean1', 'WeibullVar1']] = df1.compute().tolist()
-        # df_record[['WeibullMean2', 'WeibullVar2']] = df2.compute().tolist()
-        
-        df_record[['WeibullMean1', 'WeibullVar1']] = df1.apply(lambda x: pd.Series(x))
-        df_record[['WeibullMean2', 'WeibullVar2']] = df2.apply(lambda x: pd.Series(x))
-        print('into_dask')
-        df = dd.from_pandas(df_record[['WeibullMean1', 'WeibullVar1','WeibullMean2', 'WeibullVar2']], npartitions=35)
-        
-        # df[['WeibullMean1', 'WeibullVar1']] = df1.apply(lambda x: pd.Series(x))
-        # df[['WeibullMean2', 'WeibullVar2']] = df2.apply(lambda x: pd.Series(x))
-
-        # df = dd.from_pandas(df[['WeibullMean1', 'WeibullVar1', 'WeibullMean2', 'WeibullVar2']], npartitions=35) 
         print('first_two_moment')
         # using first_two_moment to transform from raw to log mean and SD                        
         # using Equation 7 and 8
         # generate sample mean and SD in Log scale using Mean_SD
-        df = df.apply(self.first_two_moment, args=(0,1,2,3), meta=('float64', 'float64'), axis=1) 
-        
+        df = df.apply(self.first_two_moment, args=(0,1,2,3), meta=meta) 
         df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
+        
         print('GPM_log_ratio_SD')
         # Equation 3 # generate 'ln_ratio' and 'se_ln_ratio' with sample mean and SD using GPM
-        df = df.apply(self.GPM_log_ratio_SD, args=(0,1,2,3), meta=('float64', 'float64'))  
+        df = df.apply(self.GPM_log_ratio_SD, args=(0,1,2,3), meta=meta)  
         df_record[['ln_ratio', 'se_ln_ratio']] = df.compute().tolist()
+        
         print('Coverage')
         # check coverage of each rows
-        df = df.apply(self.Coverage, args=(0,1), meta = ('float64', 'float64')) 
+        df = df.apply(self.Coverage, args=(0,1), meta=meta) 
         df_record['intervals_include_zero'] = df.compute().tolist()
-
+        print('compute dask')
         # compute the mean of the list of coverage (0 or 1), it equals to the percentage of coverage
         coverage = df.mean().compute() 
 
         return coverage, df_record, self.nMonte, self.N1, self.CV1
 
-    def sum_diff_weibull_lognorm(self, params, SampleMeanLogNorm, SampleVarianceLogNorm):
-        shape_parameter, scale_parameter = abs(params)
-        
-        MeanWeibull, VarWeibull = self.theory_Weibull_MeanVar(shape_parameter, scale_parameter)
-        
-        diff = abs(MeanWeibull - SampleMeanLogNorm)+abs(VarWeibull - SampleVarianceLogNorm)
-        diff_mean = abs(MeanWeibull - SampleMeanLogNorm)
-        diff_var = abs(VarWeibull - SampleVarianceLogNorm)
-        if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
-            self.dict_WeibullParameter_diff['SampleMeanLogNorm'].append(SampleMeanLogNorm)
-            self.dict_WeibullParameter_diff['SampleVarianceLogNorm'].append(SampleVarianceLogNorm)
-            self.dict_WeibullParameter_diff['shape_parameter'].append(shape_parameter)
-            self.dict_WeibullParameter_diff['scale_parameter'].append(scale_parameter)
-            self.dict_WeibullParameter_diff['diff'].append(diff)
-            self.dict_WeibullParameter_diff['diff_mean'].append(diff_mean)
-            self.dict_WeibullParameter_diff['diff_var'].append(diff_var)
-        
-        return self.loss_func(MeanWeibull, VarWeibull, SampleMeanLogNorm, SampleVarianceLogNorm)     
 
-    def theory_Weibull_MeanVar(self, shape_parameter, scale_parameter):
-        theoryMeanWeibull = scale_parameter * gamma(1 + 1/shape_parameter) # + location_parameter
-        theoryVarWeibull = (scale_parameter ** 2) * (gamma(1 + 2/shape_parameter) - (gamma(1 + 1/shape_parameter)) ** 2)
+    def Sample_Weibull(self, row, seed_):
+        # rSampleOfRandoms = weibull_min.rvs(self.shape_parameter, scale=self.scale_parameter, size=self.N1+self.N2, random_state = row[seed_])
+        np.random.seed(row[seed_])
+        rSampleOfRandoms = np.exp([(weibull_min.ppf(i, self.shape_parameter, loc=0, scale=self.scale_parameter)) for i in np.random.rand(self.N1+self.N2)] )
 
-        return theoryMeanWeibull, theoryVarWeibull
-
-    def sample_Weibull_MeanVar(self, shape_parameter, scale_parameter):
-        
-        # np.random.seed(self.seed_value)
-        # SamplesWeibull = np.exp([(weibull_min.ppf(i, shape_parameter, loc=0, scale=scale_parameter)) for i in np.random.rand(self.N1)])
-
-        SamplesWeibull = weibull_min.rvs(abs(shape_parameter), scale=abs(scale_parameter), size=self.N1, random_state = self.seed_value)
-        SampleMeanWeibull = np.mean(SamplesWeibull)
-        SampleVarianceWeibull = np.var(SamplesWeibull, ddof=1)
-
-        return SampleMeanWeibull, SampleVarianceWeibull
-
-    def find_WeibullMeanVar(self, row, col_SampleMeanLogNorm, col_SampleVarLogNorm):
-        nIter = 0
-        SampleMeanLogNorm, SampleVarLogNorm = row[col_SampleMeanLogNorm], row[col_SampleVarLogNorm]
-        # print('SampleMeanLogNorm, SampleVarLogNorm:',SampleMeanLogNorm, SampleVarLogNorm )
-        x0 = self.x0_pre
-        self.dict_WeibullParameter_diff = {'SampleMeanLogNorm': [], 'SampleVarianceLogNorm': [], 'shape_parameter': [], 'scale_parameter': [],  'diff': [], 'diff_mean': [], 'diff_var': []}
-        bounds_ = [(0.5,None),(0.1,None)]
-        options_ = {'ftol': 1e-7, 'xtol': 1e-10, 'eta': 0.01/(nIter//100 + 1), 'disp': False}
-        
-        # print('start find weibull')
-        while True:
-            nIter += 1
-            res = minimize(self.sum_diff_weibull_lognorm, x0, args=(SampleMeanLogNorm, SampleVarLogNorm), method='TNC', bounds=bounds_, options=options_, jac = '3-point')
-            # shape_parameter, scale_parameter = res.x
-
-            # diff = abs(self.MeanWeibull - SampleMeanLogNorm)+abs(self.VarWeibull - SampleVarLogNorm)
-            # diff_mean = abs(self.MeanWeibull - SampleMeanLogNorm)
-            # diff_var = abs(self.VarWeibull - SampleVarLogNorm)
-            # # print('diff:',diff)
-            extract_df = pd.DataFrame(self.dict_WeibullParameter_diff)
-            extract_df = extract_df[(extract_df['SampleMeanLogNorm'] == SampleMeanLogNorm) & (extract_df['SampleVarianceLogNorm'] == SampleVarLogNorm)]
-            if len(extract_df) > 0:
-                extract_df = extract_df.loc[extract_df['diff'].idxmin()]
-                diff = extract_df['diff']
-                diff_mean = extract_df['diff_mean']
-                diff_var = extract_df['diff_var']
-                if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
-                    # print('optimized res.x:', res.x)      
-                    # print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
-                    # print("MeanWeibull, VarWeibull:", self.MeanWeibull, self.VarWeibull)
-                    # print("SampleMeanLogNorm, SampleVarLogNorm:", SampleMeanLogNorm, SampleVarLogNorm)
-                    shape_parameter, scale_parameter = res.x 
-                    self.x0_pre = res.x                          
-                    break
-            else:
-                np.random.seed(self.seed_value+nIter)
-                random_ = (1 + (np.random.randint(1,high=10)-5)/100)
-                x0 = [max(0.5, res.x[0] * random_), max(0.5, res.x[1] * random_) ]
-                # weight_ = abs(diff_var/diff_mean) * random_
-        
-        return shape_parameter, scale_parameter
-
-    def Sample_Weibull(self, row, col_shape_parameter, col_scale_parameter, seed_):
-        shape_parameter = row[col_shape_parameter]
-        scale_parameter = row[col_scale_parameter]
-        rSampleOfRandoms = weibull_min.rvs(shape_parameter, scale=scale_parameter, size=self.N1+self.N2, random_state = seed_)
-        
         return rSampleOfRandoms
 
     def Sample_inv_normal(self, row, seed_):
@@ -281,9 +137,9 @@ class SimulPivotMC(object):
 
         return rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
 
-    def Mean_Var(self, row, N1, N2):
+    def Mean_Var(self, row):
         # print('N1:', N1)
-        rSampleOfRandoms1 = row[:N1]
+        rSampleOfRandoms1 = row[:self.N1]
         # print('rSampleOfRandoms1:',rSampleOfRandoms1)
         # the mean of rSampleOfRandoms1, notation "z_i"
         rSampleMean1 = np.mean(rSampleOfRandoms1)  
@@ -292,7 +148,7 @@ class SimulPivotMC(object):
         
         if N2 != 0:
             # print('N2:', N2)
-            rSampleOfRandoms2 = row[N1:(N1+N2)]
+            rSampleOfRandoms2 = row[self.N1:(self.N1+self.N2)]
             # print('rSampleOfRandoms2:',rSampleOfRandoms2)
             rSampleMean2 = np.mean(rSampleOfRandoms2)
             rSampleVar2 = np.var(rSampleOfRandoms2, ddof=1)
@@ -300,13 +156,13 @@ class SimulPivotMC(object):
         else:
             return rSampleMean1, rSampleVar1
               
-    def first_two_moment(self, row, col_SampleMean1, col_SampleVar1, col_SampleMean2, col_SampleVar2):
+    def first_two_moment(self, row, col_SampleMean1, col_SampleSD1, col_SampleMean2, col_SampleSD2):
         
         SampleMean1 = row[col_SampleMean1]
-        SampleSD1 = sqrt(row[col_SampleVar1])
+        SampleSD1 = row[col_SampleSD1]
 
         SampleMean2 = row[col_SampleMean2]
-        SampleSD2 = sqrt(row[col_SampleVar2])
+        SampleSD2 = row[col_SampleSD2]
 
         #using Equation 7 and 8
         rSampleMeanLogScale1, rSampleSDLogScale1, _ = self.transform_from_raw_to_log_mean_SD(SampleMean1, SampleSD1)
@@ -361,9 +217,7 @@ class SimulPivotMC(object):
         intervals_include_zero = (lower_bound < 0) and (upper_bound > 0)
         # 1 as True, 0 as False, check coverage
         return int(intervals_include_zero)  
-    
-    def loss_func(self, a1, a2, b1, b2, weight_=10):
-        return abs(a1-b1)+ weight_ * abs(a2-b2)
+
         
 if __name__ == '__main__':
     # number of Monte Carlo simulations
