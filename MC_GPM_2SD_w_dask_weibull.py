@@ -233,7 +233,7 @@ class SimulPivotMC(object):
         while True:
             nIter += 1
             res = minimize(self.sum_diff_weibull_lognorm, x0, args=(weight_, SampleMeanLogNorm, SampleVarLogNorm), method='TNC', bounds=bounds_, options=options_, jac = '3-point')
-            shape_parameter, scale_parameter = res.x[0], res.x[1]
+            shape_parameter, scale_parameter = res.x
             theoryMeanWeibull, theoryVarWeibull = self.theory_Weibull_MeanVar(shape_parameter, scale_parameter)
             diff = abs(theoryMeanWeibull - SampleMeanLogNorm)+abs(theoryVarWeibull - SampleVarLogNorm)
             diff_mean = abs(theoryMeanWeibull - SampleMeanLogNorm)
@@ -242,6 +242,7 @@ class SimulPivotMC(object):
             if diff < 1e-5 and diff_mean < 1e-5 and diff_var < 1e-5:
                 # print('optimized res.x:', res.x)      
                 # print('diff, diff_mean, diff_var:', diff, diff_mean, diff_var)
+                shape_parameter, scale_parameter = res.x 
                 self.x0_pre = res.x                          
                 break
             else:
@@ -412,7 +413,7 @@ if __name__ == '__main__':
                 
             output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
             
-            output_dir = f"GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
+            output_dir = f"Weibull_GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
             
             # save the results to the csv
             print('csv save to ' + output_dir + f'_.csv')
