@@ -146,7 +146,7 @@ class SimulPivotMC(object):
         # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
         rSampleVar1 = np.var(rSampleOfRandoms1, ddof=1) 
         
-        if N2 != 0:
+        if self.N2 != 0:
             # print('N2:', N2)
             rSampleOfRandoms2 = row[self.N1:(self.N1+self.N2)]
             # print('rSampleOfRandoms2:',rSampleOfRandoms2)
@@ -223,7 +223,7 @@ if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100000
     # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [15, 25 50,]: 
+    for N in [15, 25, 50]: 
         # coefficient of variation, we choose 0.15, 0.3, 0.5
         for CV in [0.15, 0.3, 0.5]: 
             # record the datetime at the start
