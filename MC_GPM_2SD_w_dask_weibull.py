@@ -65,7 +65,7 @@ class SimulPivotMC(object):
         self.U2 = chi2.ppf(random_numbers1_2, self.N2 - 1 )
         self.Z2 = norm.ppf(random_numbers2_2)
 
-    def main(self):
+    def main(self, method_of_moments="no_moments"):
         # the pre-determined list of seeds, using number of nMonte
         list_seeds = [i for i in range(self.seed_value, self.seed_value + self.nMonte)] 
         # put the list of seeds into a table (a.k.a DataFrame) with one column named "Seeds"  
@@ -77,20 +77,31 @@ class SimulPivotMC(object):
         # put the table into dask, a progress that can parallel calculating each rows using multi-thread
         df = dd.from_pandas(df['rSampleOfRandomsWeibull'], npartitions=35) 
         meta = ('float64', 'float64')
-        print('Mean_SD')
-        # calculate sample mean and Var using Mean_SD
-        df = df.apply(self.Mean_SD, meta=meta)
-        df_record[['WeibullMean1', 'WeibullSD1', 'WeibullMean2', 'WeibullSD2']] = df.compute().tolist()
-        # df_record[['LogNormMean1', 'LogNormVar1', 'LogNormMean2', 'LogNormVar2']] = df.apply(lambda x: pd.Series(x))
-        # print(df_record)
-        # print(df)
+        if method_of_moments == 'no_moments':
+            print('log samples')
+            df['rSampleOfRandomsWeibull'].apply(lambda x: np.log(x), meta=meta)
+
+            print('Mean_SD')
+            # calculate sample mean and SD using Mean_SD
+            df = df.apply(self.Mean_SD, meta=meta)
+            df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
+
+        elif method_of_moments == 'first_two_moments'
+
+            print('Mean_SD')
+            # calculate sample mean and SD using Mean_SD
+            df = df.apply(self.Mean_SD, meta=meta)
+            df_record[['WeibullMean1', 'WeibullSD1', 'WeibullMean2', 'WeibullSD2']] = df.compute().tolist()
+            # df_record[['LogNormMean1', 'LogNormVar1', 'LogNormMean2', 'LogNormVar2']] = df.apply(lambda x: pd.Series(x))
+            # print(df_record)
+            # print(df)
         
-        print('first_two_moment')
-        # using first_two_moment to transform from raw to log mean and SD                        
-        # using Equation 7 and 8
-        # generate sample mean and SD in Log scale using Mean_SD
-        df = df.apply(self.first_two_moment, args=(0,1,2,3), meta=meta) 
-        df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
+            print('first_two_moment')
+            # using first_two_moment to transform from raw to log mean and SD                        
+            # using Equation 7 and 8
+            # generate sample mean and SD in Log scale using Mean_SD
+            df = df.apply(self.first_two_moment, args=(0,1,2,3), meta=meta) 
+            df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
         
         print('GPM_log_ratio_SD')
         # Equation 3 # generate 'ln_ratio' and 'se_ln_ratio' with sample mean and SD using GPM
@@ -111,7 +122,7 @@ class SimulPivotMC(object):
     def Sample_Weibull(self, row, seed_):
         rSampleOfRandoms = weibull_min.rvs(self.shape_parameter, scale=self.scale_parameter, size=self.N1+self.N2, random_state = row[seed_])
         # np.random.seed(row[seed_])
-        # rSampleOfRandoms = [(weibull_min.ppf(i, self.shape_parameter, scale=self.scale_parameter)) for i in np.random.rand(self.N1+self.N2)]
+        # rSampleOfRandoms = [(weibuldl_min.ppf(i, self.shape_parameter, scale=self.scale_parameter)) for i in np.random.rand(self.N1+self.N2)]
 
         return rSampleOfRandoms
 
@@ -146,7 +157,7 @@ class SimulPivotMC(object):
         # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
         rSampleVar1 = np.var(rSampleOfRandoms1, ddof=1) 
         
-        if self.N2 != 0:
+        if N2 != 0:
             # print('N2:', N2)
             rSampleOfRandoms2 = row[self.N1:(self.N1+self.N2)]
             # print('rSampleOfRandoms2:',rSampleOfRandoms2)
@@ -222,39 +233,41 @@ class SimulPivotMC(object):
 if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100000
-    # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-    for N in [15, 25, 50]: 
-        # coefficient of variation, we choose 0.15, 0.3, 0.5
-        for CV in [0.15, 0.3, 0.5]: 
-            # record the datetime at the start
-            start_time = datetime.now() 
-            print('start_time:', start_time) 
-            print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV_{CV}_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}")
+    for method_of_moments in ['no_moments']: #, 'first_two_moment', 'higher_orders_of_moments'
+        print(method_of_moments)
+        # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
+        for N in [15, 25, 50]: 
+            # coefficient of variation, we choose 0.15, 0.3, 0.5
+            for CV in [0.15, 0.3, 0.5]: 
+                # record the datetime at the start
+                start_time = datetime.now() 
+                print('start_time:', start_time) 
+                print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV_{CV}_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}")
 
-            # Cal the class SimulPivotMC(), generate variables in the def __init__(self)
-            run = SimulPivotMC(nMonteSim, N, CV)  
-            # start main()
-            coverage_by_ln_ratio, df_record, nMonte, N1, CV1 = run.main()  
-            
-            # record the datetime at the end
-            end_time = datetime.now() 
-            # print the datetime at the end
-            print('end_time:', end_time) 
-            # calculate the time taken
-            time_difference = end_time - start_time
-            print('time_difference:', time_difference) 
-            # print out the percentage of coverage
-            print('percentage coverage: %s' %(coverage_by_ln_ratio,)) 
+                # Cal the class SimulPivotMC(), generate variables in the def __init__(self)
+                run = SimulPivotMC(nMonteSim, N, CV)  
+                # start main()
+                coverage_by_ln_ratio, df_record, nMonte, N1, CV1 = run.main(method_of_moments=method_of_moments)  
                 
-            output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
-            
-            output_dir = f"Weibull_GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
-            
-            # save the results to the csv
-            print('csv save to ' + output_dir + f'_.csv')
-            df_record.to_csv(output_dir + f'_.csv')
+                # record the datetime at the end
+                end_time = datetime.now() 
+                # print the datetime at the end
+                print('end_time:', end_time) 
+                # calculate the time taken
+                time_difference = end_time - start_time
+                print('time_difference:', time_difference) 
+                # print out the percentage of coverage
+                print('percentage coverage: %s' %(coverage_by_ln_ratio,)) 
+                    
+                output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
+                
+                output_dir = f"Weibull_GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
+                
+                # save the results to the csv
+                print('csv save to ' + output_dir + f'_.csv')
+                df_record.to_csv(output_dir + f'_.csv')
 
-            # save the results to the txt
-            with open(output_dir + f'_.txt', 'w') as f:
-                f.write(output_txt1)
+                # save the results to the txt
+                with open(output_dir + f'_.txt', 'w') as f:
+                    f.write(output_txt1)
     quit()
