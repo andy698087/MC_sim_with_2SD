@@ -34,7 +34,7 @@ class SimulPivotMC(object):
         self.rSDLogScale2 = self.rSDLogScale1
         # print('self.rSDLogScale1:',self.rSDLogScale1)
 
-        df_weibull_params = pd.read_csv('weibull_params1e-6.csv')[['CV','shape_parameter','scale_parameter']]
+        df_weibull_params = pd.read_csv('weibull_params1e-6_2.csv')[['CV','shape_parameter','scale_parameter']]
         self.shape_parameter, self.scale_parameter = df_weibull_params[df_weibull_params['CV']==CVTimeScale][['shape_parameter','scale_parameter']].iloc[0,:]
 
         # the number for pivot, the notation "m" in the manuscript
@@ -73,20 +73,21 @@ class SimulPivotMC(object):
         df = pd.DataFrame({'Seeds':list_seeds}) 
         df['rSampleOfRandomsWeibull'] = df.apply(self.Sample_Weibull, args=('Seeds',), axis=1)
         df_record = df
+        
         # df = df['rSampleOfRandomsLogNorm'].copy()
         # put the table into dask, a progress that can parallel calculating each rows using multi-thread
         df = dd.from_pandas(df['rSampleOfRandomsWeibull'], npartitions=35) 
         meta = ('float64', 'float64')
         if method_of_moments == 'no_moments':
             print('log samples')
-            df['rSampleOfRandomsWeibull'].apply(lambda x: np.log(x), meta=meta)
-
+            df = df.apply(lambda x: np.log(x), meta=meta)
+            
             print('Mean_SD')
             # calculate sample mean and SD using Mean_SD
             df = df.apply(self.Mean_SD, meta=meta)
             df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
 
-        elif method_of_moments == 'first_two_moments'
+        elif method_of_moments == 'first_two_moments':
 
             print('Mean_SD')
             # calculate sample mean and SD using Mean_SD
@@ -147,25 +148,6 @@ class SimulPivotMC(object):
         rSampleSD2 = np.std(rSampleOfRandoms2, ddof=1)
 
         return rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
-
-    def Mean_Var(self, row):
-        # print('N1:', N1)
-        rSampleOfRandoms1 = row[:self.N1]
-        # print('rSampleOfRandoms1:',rSampleOfRandoms1)
-        # the mean of rSampleOfRandoms1, notation "z_i"
-        rSampleMean1 = np.mean(rSampleOfRandoms1)  
-        # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
-        rSampleVar1 = np.var(rSampleOfRandoms1, ddof=1) 
-        
-        if N2 != 0:
-            # print('N2:', N2)
-            rSampleOfRandoms2 = row[self.N1:(self.N1+self.N2)]
-            # print('rSampleOfRandoms2:',rSampleOfRandoms2)
-            rSampleMean2 = np.mean(rSampleOfRandoms2)
-            rSampleVar2 = np.var(rSampleOfRandoms2, ddof=1)
-            return rSampleMean1, rSampleVar1, rSampleMean2, rSampleVar2
-        else:
-            return rSampleMean1, rSampleVar1
               
     def first_two_moment(self, row, col_SampleMean1, col_SampleSD1, col_SampleMean2, col_SampleSD2):
         
@@ -233,7 +215,7 @@ class SimulPivotMC(object):
 if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100000
-    for method_of_moments in ['no_moments']: #, 'first_two_moment', 'higher_orders_of_moments'
+    for method_of_moments in ['no_moments','first_two_moment']: #, 'first_two_moment', 'higher_orders_of_moments'
         print(method_of_moments)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
         for N in [15, 25, 50]: 
@@ -261,13 +243,13 @@ if __name__ == '__main__':
                     
                 output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
                 
-                output_dir = f"Weibull_GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
+                output_dir = f"Weibull_GPMMC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
                 
                 # save the results to the csv
-                print('csv save to ' + output_dir + f'_.csv')
-                df_record.to_csv(output_dir + f'_.csv')
+                print('csv save to ' + output_dir + f'_{method_of_moments}.csv')
+                df_record.to_csv(output_dir + f'_{method_of_moments}.csv')
 
                 # save the results to the txt
-                with open(output_dir + f'_.txt', 'w') as f:
+                with open(output_dir + f'_{method_of_moments}.txt', 'w') as f:
                     f.write(output_txt1)
     quit()
