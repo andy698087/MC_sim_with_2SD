@@ -79,14 +79,14 @@ class SimulPivotMC(object):
         meta = ('float64', 'float64')
         if method_of_moments == 'no_moments':
             print('log samples')
-            df['rSampleOfRandomsWeibull'].apply(lambda x: np.log(x), meta=meta)
+            df.apply(lambda x: np.log(x), meta=meta)
 
             print('Mean_SD')
             # calculate sample mean and SD using Mean_SD
             df = df.apply(self.Mean_SD, meta=meta)
             df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
 
-        elif method_of_moments == 'first_two_moments'
+        elif method_of_moments == 'first_two_moments':
 
             print('Mean_SD')
             # calculate sample mean and SD using Mean_SD
@@ -157,7 +157,7 @@ class SimulPivotMC(object):
         # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
         rSampleVar1 = np.var(rSampleOfRandoms1, ddof=1) 
         
-        if N2 != 0:
+        if self.N2 != 0:
             # print('N2:', N2)
             rSampleOfRandoms2 = row[self.N1:(self.N1+self.N2)]
             # print('rSampleOfRandoms2:',rSampleOfRandoms2)
@@ -264,10 +264,10 @@ if __name__ == '__main__':
                 output_dir = f"Weibull_GPM_MC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
                 
                 # save the results to the csv
-                print('csv save to ' + output_dir + f'_.csv')
-                df_record.to_csv(output_dir + f'_.csv')
+                print('csv save to ' + output_dir + f'_{method_of_moments}.csv')
+                df_record.to_csv(output_dir + f'_{method_of_moments}.csv')
 
                 # save the results to the txt
-                with open(output_dir + f'_.txt', 'w') as f:
+                with open(output_dir + f'_{method_of_moments}.txt', 'w') as f:
                     f.write(output_txt1)
     quit()
