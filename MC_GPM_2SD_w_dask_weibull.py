@@ -24,17 +24,19 @@ class SimulPivotMC(object):
         self.CV2 = self.CV1
 
         # Mean in log scale, notation "μ_i" in the manuscript
-        MeanTimeScale = 1
-        self.rMeanLogScale1 = log(MeanTimeScale)
+        # self.rMeanLogScale1 = 0
+        # rMeanLogScale1 = log(Mean/sqrt(CVsq + 1)) 
+        # MeanTimeScale = exp(rMeanLogScale1) * sqrt(CV**2 +1)
+        # VarTimeScale = (CV * MeanTimeScale)**2
+        # self.rMeanLogScale2 = self.rMeanLogScale1
         # print('self.rMeanLogScale1:',self.rMeanLogScale1 )
-        self.rMeanLogScale2 = self.rMeanLogScale1
-        
+
         # Standard deviation in log scale, notation "σ_i" in the manuscript, Equation 1 in the manuscript
-        self.rSDLogScale1 = sqrt(log(1 + self.CV1 ** 2)) 
-        self.rSDLogScale2 = self.rSDLogScale1
+        # self.rSDLogScale1 = sqrt(log(1 + self.CV1 ** 2)) 
+        # self.rSDLogScale2 = self.rSDLogScale1
         # print('self.rSDLogScale1:',self.rSDLogScale1)
 
-        df_weibull_params = pd.read_csv('weibull_params1e-6_2.csv')[['CV','shape_parameter','scale_parameter']]
+        df_weibull_params = pd.read_csv('weibull_params1e-5_mu_0.csv')[['CV','shape_parameter','scale_parameter']]
         self.shape_parameter, self.scale_parameter = df_weibull_params[df_weibull_params['CV']==CVTimeScale][['shape_parameter','scale_parameter']].iloc[0,:]
 
         # the number for pivot, the notation "m" in the manuscript
@@ -127,14 +129,6 @@ class SimulPivotMC(object):
 
         return rSampleOfRandoms
 
-    def Sample_inv_normal(self, row, seed_):
-        # generate log-normal distribution, using mean of rMeanLogScale and standard deviation of rSDLogScale
-        # rSampleOfRandoms = norm.rvs(loc=self.rMeanLogScale1, scale=self.rSDLogScale1, size=self.N1+self.N2, random_state = row[seed_])
-        np.random.seed(row[seed_])
-        rSampleOfRandoms = np.exp([(norm.ppf(i,loc=self.rMeanLogScale1, scale=self.rSDLogScale1)) for i in np.random.rand(self.N1+self.N2)] )
-
-        return rSampleOfRandoms
-
     def Mean_SD(self, row):
 
         rSampleOfRandoms1 = row[:self.N1]
@@ -214,7 +208,7 @@ class SimulPivotMC(object):
         
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 100000
+    nMonteSim = 10
     for method_of_moments in ['no_moments']:#,'first_two_moment']: #, 'first_two_moment', 'higher_orders_of_moments'
         print(method_of_moments)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript

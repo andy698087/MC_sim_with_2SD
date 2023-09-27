@@ -10,7 +10,10 @@ class weibull_and_lognorm(object):
 
     def __init__(self, N, CVTimeScale, seed_=20230922):
         self.N = N
-        self.MeanTimeScale = 1
+        # self.MeanTimeScale = 1
+        MeanLogScale = 0
+        #MeanLogScale_1 = log(Mean/sqrt(CVsq + 1)) 
+        self.MeanTimeScale = exp(MeanLogScale) * sqrt(CV**2 +1)
         self.VarTimeScale = (CVTimeScale * self.MeanTimeScale)**2
         # self.MeanLogScale = log(self.MeanTimeScale)
         # self.VarLogScale = log(1 + CVTimeScale ** 2)
@@ -43,7 +46,7 @@ class weibull_and_lognorm(object):
         # print('diff:',diff)
         # print('MeanWeibull:',MeanWeibull)
         # print('VarWeibull:',VarWeibull)
-        if diff < 1e-5 and diff_mean < 1e-6 and diff_var < 1e-6:
+        if diff < 1e-6 and diff_mean < 1e-5 and diff_var < 1e-5:
             self.dict_WeibullParameter_diff['MeanTimeScale'].append(MeanTimeScale)
             self.dict_WeibullParameter_diff['VarTimeScale'].append(VarTimeScale)
             self.dict_WeibullParameter_diff['shape_parameter'].append(shape_parameter)
@@ -92,13 +95,15 @@ class weibull_and_lognorm(object):
                 extract_df = extract_df.loc[extract_df['diff'].idxmin()]
                 # print('extract_df:',extract_df)
                 diff = extract_df['diff']
-                diff_mean = extract_df['diff_mean']
-                diff_var = extract_df['diff_var']
+                # diff_mean = extract_df['diff_mean']
+                # diff_var = extract_df['diff_var']
                 if diff < 1e-6:
                     # print('optimized res.x:', res.x)      
                     # print(pd.DataFrame(extract_df))
                     self.extract_df = extract_df
                     shape_parameter, scale_parameter = res.x 
+                    print('extract_df', extract_df)
+                    # shape_parameter, scale_parameter = extract_df[['shape_parameter','scale_parameter']]
                     # self.x0_pre = res.x                          
                     break
             else:
@@ -142,7 +147,7 @@ for N in [15]:
         weibull_params['diff'].append(extract_df['diff'])
         weibull_params['diff_mean'].append(extract_df['diff_mean'])
         weibull_params['diff_var'].append(extract_df['diff_var'])
-pd.DataFrame(weibull_params).to_csv('weibull_params1e-6_2.csv')
+pd.DataFrame(weibull_params).to_csv('weibull_params1e-5_mu_0.csv')
 quit()
 
 

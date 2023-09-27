@@ -49,7 +49,7 @@ np.random.seed(seed_value - 4)
 random_numbers2_2 = np.random.rand(nSimulForPivot)
 
 # Load files for Weibull shape and scale parameters for coresponding CV
-df_weibull_params = pd.read_csv('weibull_params1e-6_2.csv')[['CV','shape_parameter','scale_parameter']]
+df_weibull_params = pd.read_csv('weibull_params1e-5_mu_0.csv')[['CV','shape_parameter','scale_parameter']]
 
 # for Table 1, 2, and 3, respectively
 for method_of_moments in ['no_moments', 'first_two_moment']:
@@ -64,14 +64,10 @@ for method_of_moments in ['no_moments', 'first_two_moment']:
             CV1 = CV
             CV2 = CV1
 
-            MeanTimeScale = 1
-            # Mean in log scale, notation "μ_i" in the manuscript
-            rMeanLogScale1 = log(MeanTimeScale)
-            rMeanLogScale2 = rMeanLogScale1
-                    
-            # Standard deviation in log scale, notation "σ_i" in the manuscript
-            rSDLogScale1 = sqrt(log(1 + CV1 ** 2))  #Equation 1 in the manuscript
-            rSDLogScale2 = rSDLogScale1
+            # MeanLogScale = 0
+            # #MeanLogScale_1 = log(Mean/sqrt(CVsq + 1)) 
+            # MeanTimeScale = exp(MeanLogScale) * sqrt(CV**2 +1)
+            # VarTimeScale = (CV * MeanTimeScale)**2
 
             # Weibull shape and scale parameters for coresponding CV
             shape_parameter, scale_parameter = df_weibull_params[df_weibull_params['CV']==CV][['shape_parameter','scale_parameter']].iloc[0,:]
