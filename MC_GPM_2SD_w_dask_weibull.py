@@ -215,7 +215,7 @@ class SimulPivotMC(object):
 if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100000
-    for method_of_moments in ['no_moments','first_two_moment']: #, 'first_two_moment', 'higher_orders_of_moments'
+    for method_of_moments in ['no_moments']:#,'first_two_moment']: #, 'first_two_moment', 'higher_orders_of_moments'
         print(method_of_moments)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
         for N in [15, 25, 50]: 
