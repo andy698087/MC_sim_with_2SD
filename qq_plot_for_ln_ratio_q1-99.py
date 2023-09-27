@@ -9,6 +9,17 @@ import numbers
 import numpy as np
 import matplotlib.pyplot as plt
 
+def fig_distribution(data,N1,CV,MoM,item):
+    # Create a histogram
+    fig, ax = plt.subplots()
+    plt.hist(data, bins=20, color='blue', alpha=0.7)
+    plt.title(f'Distribution_{N1}_{CV}_{MoM}_{item}')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    fig.savefig(f"Distribution_{N1}_{CV}_{MoM}_{item}_20230927.png")
+    # Display the histogram
+    # plt.show()
 
 def normal_quantile_plot(CV1, CV2, CV1_label, CV2_label, nMonte, MoM, item):
     # Desired percentiles
@@ -23,27 +34,39 @@ def normal_quantile_plot(CV1, CV2, CV1_label, CV2_label, nMonte, MoM, item):
 
     # Generate data
     # x = rng.normal(size=N)  # Sample 1: X ~ N(0, 1)
-    Y = rng.standard_t(df=5, size=nMonte)  # Sample 2: Y ~ t(5)
-    Y = np.percentile(Y, percentiles, interpolation='nearest')
+    X = rng.normal(size=nMonte)  # Sample 2: Y ~ t(5)
+    X = np.percentile(X, percentiles, interpolation='midpoint')
     # Create a normal quantile plot
     fig, ax = plt.subplots()
 
     # Plot CV1
-    X1 = np.percentile(CV1, percentiles, interpolation='nearest')
+    Y1 = np.percentile(CV1, percentiles, interpolation='midpoint')
 
-    ax.scatter(X1, Y, color='red', label=CV1_label)
+    ax.scatter(X, Y1, color='red', label=CV1_label)
+
+    # Plot regression line for CV1
+    slope, intercept, r_value, _, _ = stats.linregress(X, Y1)
+    ax.plot(X, slope * X + intercept, color='red', linestyle='--')
+    ax.text(0.65, 0.4, f'Y = {slope:.2f}X + {intercept:.2f}', transform=ax.transAxes, color='red')
+    ax.text(0.65, 0.35, f'R^2 = {r_value**2:.2f}', transform=ax.transAxes, color='red')
 
     # Plot CV2
-    X2 = np.percentile(CV2, percentiles, interpolation='nearest')
-    ax.scatter(X2, Y, color='blue', label=CV2_label)
+    Y2 = np.percentile(CV2, percentiles, interpolation='midpoint')
+    ax.scatter(X, Y2, color='blue', label=CV2_label)
 
     # Plot data (optional)
     # ax.scatter(q_theoretical, q_data, color='green', label='Data')
+    
+    # Plot regression line for CV2
+    slope, intercept, r_value, _, _ = stats.linregress(X, Y2)
+    ax.plot(X, slope * X + intercept, color='blue', linestyle='--')
+    ax.text(.65, 0.25, f'Y = {slope:.2f}X + {intercept:.2f}', transform=ax.transAxes, color='blue')
+    ax.text(.65, 0.2, f'R^2 = {r_value**2:.2f}', transform=ax.transAxes, color='blue')
 
     # Customize the plot
-    ax.set_title(f"Normal Quantile Plot_N{N}_{MoM}_{item}")
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
+    ax.set_title(f"Quantile-Quantile Plot_N{N}_{MoM}_{item}")
+    ax.set_xlabel("Theoretical Percentiles")
+    ax.set_ylabel("Observed Percentiles")
     ax.legend()
 
     # Save the plot as an image file
@@ -53,7 +76,7 @@ def normal_quantile_plot(CV1, CV2, CV1_label, CV2_label, nMonte, MoM, item):
     # plt.show()
 
 # Define the directory where your text files are located
-directory = "C:/Users/User/MC_sim_2SD/Weibull_no_moments_20230927"
+directory = "C:/Users/User/MC_sim_2SD/Weibull_no_moments_20230927_MeanTimeScale_1"
 
 # Get a list of files that match the pattern in the directory
 matching_files = [file for file in os.listdir(directory) if file.startswith("Weibull_GPMMC_nMonte_100000_N") and file.endswith("ts.csv")]
@@ -91,7 +114,10 @@ MoM = df[df['CV'] == 0.15]['MethodOfMoments'][0]
 # normal_quantile_plot(data,N1,CV,MethodOfMoments,str(col))
 # prob_plot(data,N1,CV,MethodOfMoments,str(col))
 # fig_distribution(data,N1,CV,MethodOfMoments,str(col))
-normal_quantile_plot(CV1, CV2, 'CV=0.15', 'CV=0.5', N, MoM, 'ln_ratio')
 
+# normal_quantile_plot(CV1, CV2, 'CV=0.15', 'CV=0.5', N, MoM, 'ln_ratio')
+
+fig_distribution(CV1,N,'CV=0.15',MoM,'ln_ratio')
+fig_distribution(CV2,N,'CV=0.5',MoM,'ln_ratio')
 
 quit()
