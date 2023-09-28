@@ -21,10 +21,10 @@ def Coverage(row, col_ln_ratio, col_se_ln_ratio, alpha = 0.05):
     return int(intervals_include_zero)  
 
 # Define the directory where your text files are located
-directory = "C:/Users/User/MC_sim_2SD/Weibull_no_moments_20230927"
+directory = "C:/Users/User/MC_sim_2SD/Weibull_20230927-2_MeanLogScale_0"
 
 # Get a list of files that match the pattern in the directory
-matching_files = [file for file in os.listdir(directory) if file.startswith("Weibull_GPMMC_nMonte_100000_N") and file.endswith("ts.csv")]
+matching_files = [file for file in os.listdir(directory) if file.startswith("Weibull_GPMMC_nMonte_100000_N") and file.endswith(".csv")]
 
 # Initialize an empty list to store data from all files
 
@@ -34,6 +34,7 @@ data = {'MethodOfMoments':[], 'nMonte': [], 'N': [], 'CV': [],
         'percentage_ln_ratio_above_0.5':[],'percentage_ln_ratio_below_0.5':[], 'percentage_95_coverage':[], 'percentage_99_coverage':[]}
 # Loop through the matching files and extract data
 for filename in matching_files:
+    print(filename)
     filename_frag = filename.rstrip('.csv').split('_')
     # if filename_frag[-1] == 'noMethodOfMoments' or filename_frag[-1] == 'False':
     #     data['MethodOfMoments'].append('No_MethodOfMoments')
@@ -43,7 +44,7 @@ for filename in matching_files:
     #     data['MethodOfMoments'].append('Higgins2')
     # else:
     #     data['MethodOfMoments'].append('Orignal_MethodOfMoments')
-    data['MethodOfMoments'].append('_'.join(filename_frag[8:]))
+    data['MethodOfMoments'].append('_'.join(filename_frag[9:]))
     data['nMonte'].append(filename_frag[3])
     data['N'].append(filename_frag[5])
     data['CV'].append(filename_frag[7])
@@ -71,6 +72,6 @@ df = pd.DataFrame(data)
 
 df[df.columns[1:]] = df[df.columns[1:]].astype(float)
 # # Define the filename for your Excel file
-df.to_csv("Weibull_from_csv_GPM_MC_nMonte_100000_SEmean_no_moments_above_below_0.5_20230927.csv")
+df.to_csv("Weibull_from_csv_GPM_MC_nMonte_100000_SEmean_20230927_MeanLogScale_0.csv")
 
 quit()

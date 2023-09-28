@@ -36,7 +36,8 @@ print('start_time:', start_time)
 
 # Define the file_path where your csv files are located
 # csv_file_path = "/Users/andypchen/Dropbox/MC_sim/GPM_MC_nMonte_100000_N_50_CV_0.15_20230916014632_higher_orders_of_moments_noRawSamples.csv"
-csv_file_path = "GPM_MC_2SD_higher_orders_2_compare_20230916_LogNorm/GPM_MC_nMonte_100000_N_15_CV_0.3_20230916192959_first_two_moment.csv"
+# csv_file_path = "GPM_MC_2SD_higher_orders_2_compare_20230916_LogNorm/GPM_MC_nMonte_100000_N_15_CV_0.3_20230916192959_first_two_moment.csv"
+csv_file_path = "Weibull_GPM_MC_2SD_20230925_two_moments_no_label_no_moments_not_LogSample/Weibull_GPM_MC_nMonte_100000_N_15_CV_0.3_20230925014824_.csv"
 # Initialize an empty dictionary to store data from all files
 data = {'mean_weighted_ave_ln_ratio': [], 'se_weighted_ave_ln_ratio': [], 'coverage': []}
 
@@ -51,7 +52,7 @@ nSim = 100
 
 # Extract relevant information from csv file, including columns of ln_ratio and se_ln_ratio
 df_GPM_MC_ln_ratio_se = pd.read_csv(csv_file_path)
-print(df_GPM_MC_ln_ratio_se)
+# print(df_GPM_MC_ln_ratio_se)
 seed_ = 20230908
 list_seed = [s for s in range(seed_, seed_ + nSim)]
 list_weighted_ave_ln_ratio = []
@@ -59,13 +60,13 @@ list_coverage = []
 
 # Loop through different seeds, calculate weighted averages, and record in list, with replacement
 # for seed_i in list_seed:
-    # random_pick_nSamples = making_random_pick(seed_i, nSamples)
-    # list_weighted_ave_ln_ratio.append(sample_weighted_ave_se_interval_include(random_pick_nSamples, df_GPM_MC_ln_ratio_se))
-
+#     random_pick_nSamples = making_random_pick(seed_i, nSamples)
+#     weighted_ave, intervals_include_zero = sample_weighted_ave_se_interval_include(random_pick_nSamples, df_GPM_MC_ln_ratio_se)
+#     list_weighted_ave_ln_ratio.append(weighted_ave)
+#     list_coverage.append(intervals_include_zero)
 # no replacement
 rand_index = making_random_pick_no_replacement(seed_)
 random_pick_nSamples = [rand_index[i:i+10] for i in range(0, nSamples*nSim, 10)]
-print(random_pick_nSamples)
 for random_pick_nSample in random_pick_nSamples:
     weighted_ave, intervals_include_zero = sample_weighted_ave_se_interval_include(random_pick_nSample, df_GPM_MC_ln_ratio_se)
     list_weighted_ave_ln_ratio.append(weighted_ave)
@@ -89,7 +90,7 @@ time_difference = end_time - start_time
 print('time_difference:', time_difference)
 
 # Define the output filename for the CSV file with timestamp
-output_dir = f"Resample_NR_mean_weighted_ave_ln_ratio_{str(end_time).split('.')[0].replace('-', '').replace(' ', '').replace(':', '')}.csv"
+output_dir = f"Resample_mean_NR_weibull_weighted_ave_ln_ratio_{str(end_time).split('.')[0].replace('-', '').replace(' ', '').replace(':', '')}.csv"
 
 # Save the DataFrame to a CSV file
 df_data.to_csv(output_dir)

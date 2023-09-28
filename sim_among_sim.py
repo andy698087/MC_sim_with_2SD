@@ -80,7 +80,12 @@ for filename in matching_files:
         #     data['MethodOfMoments'].append('Higgins1')
         # else:
         #     data['MethodOfMoments'].append('Orignal_MethodOfMoments')
-        data['MethodOfMoments'].append('first_two_moments')
+        if 'no' in filename_frag and 'moment' in filename_frag:
+            data['MethodOfMoments'].append('no_moments')
+            print('no_moments')
+        else:
+            data['MethodOfMoments'].append('first_two_moments')
+            print('first_two_moments')
         data['nMonte'].append(filename_frag[4])
         data['N'].append(filename_frag[6])
         data['CV'].append(filename_frag[8])
@@ -114,8 +119,8 @@ df[df.columns[1:]] = df[df.columns[1:]].astype(float)
 
 end_time = datetime.now() # record the datetime at the end
 print('end_time:', end_time) # print the datetime at the end
-df.to_csv(f"Resample_NR_mean_weighted_ave_ln_ratio_dask_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}.csv")
-
+df.to_csv(f"Resample_mean_weighted_ave_ln_ratio_dask_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}.csv")
+print(f"save to Resample_mean_weighted_ave_ln_ratio_dask_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}.csv")
 time_difference = end_time - start_time
 print('time_difference:', time_difference) # calculate the time taken
 quit()

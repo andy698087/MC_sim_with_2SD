@@ -8,7 +8,7 @@ import dask.dataframe as dd
 from scipy.optimize import minimize
 
 class SimulPivotMC(object):
-    def __init__(self, nMonteSim, N, CVTimeScale):
+    def __init__(self, nMonteSim, N, CVTimeScale, path_to_weibull_params):
         # number of Monte Carlo Simulation
         self.nMonte = nMonteSim
 
@@ -36,7 +36,7 @@ class SimulPivotMC(object):
         # self.rSDLogScale2 = self.rSDLogScale1
         # print('self.rSDLogScale1:',self.rSDLogScale1)
 
-        df_weibull_params = pd.read_csv('weibull_params1e-5_mu_0.csv')[['CV','shape_parameter','scale_parameter']]
+        df_weibull_params = pd.read_csv(path_to_weibull_params)[['CV','shape_parameter','scale_parameter']]
         self.shape_parameter, self.scale_parameter = df_weibull_params[df_weibull_params['CV']==CVTimeScale][['shape_parameter','scale_parameter']].iloc[0,:]
 
         # the number for pivot, the notation "m" in the manuscript
@@ -208,42 +208,44 @@ class SimulPivotMC(object):
         
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 10
-    for method_of_moments in ['no_moments']:#,'first_two_moment']: #, 'first_two_moment', 'higher_orders_of_moments'
+    nMonteSim = 100000
+    for method_of_moments in ['first_two_moment']:#,'no_moments']: #, 'first_two_moment', 'higher_orders_of_moments'
         print(method_of_moments)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
         for N in [15, 25, 50]: 
             # coefficient of variation, we choose 0.15, 0.3, 0.5
             for CV in [0.15, 0.3, 0.5]: 
-                # record the datetime at the start
-                start_time = datetime.now() 
-                print('start_time:', start_time) 
-                print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV_{CV}_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}")
+                for path_to_weibull_params in ['weibull_params1e-6_mean_025.csv','weibull_params1e-6_mean_3.csv']:
+                    MeanTimeScale = path_to_weibull_params.split('_')[3].split('.')[0]
+                    # record the datetime at the start
+                    start_time = datetime.now() 
+                    print('start_time:', start_time) 
+                    print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV_{CV}_Mean_{MeanTimeScale}_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}")
 
-                # Cal the class SimulPivotMC(), generate variables in the def __init__(self)
-                run = SimulPivotMC(nMonteSim, N, CV)  
-                # start main()
-                coverage_by_ln_ratio, df_record, nMonte, N1, CV1 = run.main(method_of_moments=method_of_moments)  
-                
-                # record the datetime at the end
-                end_time = datetime.now() 
-                # print the datetime at the end
-                print('end_time:', end_time) 
-                # calculate the time taken
-                time_difference = end_time - start_time
-                print('time_difference:', time_difference) 
-                # print out the percentage of coverage
-                print('percentage coverage: %s' %(coverage_by_ln_ratio,)) 
+                    # Cal the class SimulPivotMC(), generate variables in the def __init__(self)
+                    run = SimulPivotMC(nMonteSim, N, CV, path_to_weibull_params)  
+                    # start main()
+                    coverage_by_ln_ratio, df_record, nMonte, N1, CV1 = run.main(method_of_moments=method_of_moments)  
                     
-                output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
-                
-                output_dir = f"Weibull_GPMMC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
-                
-                # save the results to the csv
-                print('csv save to ' + output_dir + f'_{method_of_moments}.csv')
-                df_record.to_csv(output_dir + f'_{method_of_moments}.csv')
+                    # record the datetime at the end
+                    end_time = datetime.now() 
+                    # print the datetime at the end
+                    print('end_time:', end_time) 
+                    # calculate the time taken
+                    time_difference = end_time - start_time
+                    print('time_difference:', time_difference) 
+                    # print out the percentage of coverage
+                    print('percentage coverage: %s' %(coverage_by_ln_ratio,)) 
+                        
+                    output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
+                    
+                    output_dir = f"Weibull_GPMMC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_Mean_{MeanTimeScale}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
+                    
+                    # save the results to the csv
+                    print('csv save to ' + output_dir + f'_{method_of_moments}.csv')
+                    df_record.to_csv(output_dir + f'_{method_of_moments}.csv')
 
-                # save the results to the txt
-                with open(output_dir + f'_{method_of_moments}.txt', 'w') as f:
-                    f.write(output_txt1)
+                    # save the results to the txt
+                    with open(output_dir + f'_{method_of_moments}.txt', 'w') as f:
+                        f.write(output_txt1)
     quit()
