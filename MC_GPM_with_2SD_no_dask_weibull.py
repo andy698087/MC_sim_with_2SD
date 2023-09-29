@@ -23,7 +23,7 @@ def transform_from_raw_to_log_mean_SD(Mean, SD):
 
 
 # number of Monte Carlo Simulations
-nMonte = 10
+nMonte = 100000
 
 # Calculate z-score for alpha = 0.05, gi
 # ppf is the percent point function that is inverse of cumulative distribution function
@@ -71,7 +71,8 @@ for method_of_moments in ['no_moments', 'first_two_moment']:
 
             # Weibull shape and scale parameters for coresponding CV
             shape_parameter, scale_parameter = df_weibull_params[df_weibull_params['CV']==CV][['shape_parameter','scale_parameter']].iloc[0,:]
-
+            print(df_weibull_params[df_weibull_params['CV']==CV])
+            quit()
             # Generate random number for later used in calculating Ui and Zi in generalized pivotal method
             # group 1 pivot calculation
             # U_i and Z_i used in Equation 3
