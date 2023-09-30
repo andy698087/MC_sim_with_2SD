@@ -81,6 +81,7 @@ class SimulPivotMC(object):
         df = dd.from_pandas(df['rSampleOfRandomsWeibull'], npartitions=35) 
         meta = ('float64', 'float64')
         if method_of_moments == 'no_moments':
+            print('no_moments')
             print('log samples')
             df = df.apply(lambda x: np.log(x), meta=meta)
             
@@ -90,7 +91,7 @@ class SimulPivotMC(object):
             df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
 
         elif method_of_moments == 'first_two_moments':
-
+            print('first_two_moments')
             print('Mean_SD')
             # calculate sample mean and SD using Mean_SD
             df = df.apply(self.Mean_SD, meta=meta)
@@ -209,13 +210,13 @@ class SimulPivotMC(object):
 if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100000
-    for method_of_moments in ['first_two_moment']:#,'no_moments']: #, 'first_two_moment', 'higher_orders_of_moments'
+    for method_of_moments in ['first_two_moments']:#,'no_moments']: #, 'first_two_moment', 'higher_orders_of_moments'
         print(method_of_moments)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
         for N in [15, 25, 50]: 
             # coefficient of variation, we choose 0.15, 0.3, 0.5
             for CV in [0.15, 0.3, 0.5]: 
-                for path_to_weibull_params in ['weibull_params1e-6_mean_025.csv','weibull_params1e-6_mean_3.csv']:
+                for path_to_weibull_params in ['weibull_params1e-6_mean_1.csv']:# ['weibull_params1e-5_mu_0.csv','weibull_params1e-6_mean_025.csv','weibull_params1e-6_mean_3.csv']:
                     MeanTimeScale = path_to_weibull_params.split('_')[3].split('.')[0]
                     # record the datetime at the start
                     start_time = datetime.now() 
