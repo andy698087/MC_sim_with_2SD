@@ -71,8 +71,7 @@ for method_of_moments in ['no_moments', 'first_two_moment']:
 
             # Weibull shape and scale parameters for coresponding CV
             shape_parameter, scale_parameter = df_weibull_params[df_weibull_params['CV']==CV][['shape_parameter','scale_parameter']].iloc[0,:]
-            print(df_weibull_params[df_weibull_params['CV']==CV])
-            quit()
+
             # Generate random number for later used in calculating Ui and Zi in generalized pivotal method
             # group 1 pivot calculation
             # U_i and Z_i used in Equation 3

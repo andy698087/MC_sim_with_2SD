@@ -12,11 +12,10 @@ class weibull_and_lognorm(object):
         self.N = N
         
         MeanLogScale = 0
-        #MeanLogScale_1 = log(Mean/sqrt(CVsq + 1)) 
+        # MeanLogScale_1 = log(Mean/sqrt(CVsq + 1)) 
         # self.MeanTimeScale = exp(MeanLogScale) * sqrt(CV**2 +1)
         self.MeanTimeScale = 3
         self.VarTimeScale = (CVTimeScale * self.MeanTimeScale)**2
-        # self.MeanLogScale = log(self.MeanTimeScale)
         # self.VarLogScale = log(1 + CVTimeScale ** 2)
         print('self.MeanTimeScale:',self.MeanTimeScale)
         print('self.VarTimeScale:',self.VarTimeScale)
