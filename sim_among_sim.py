@@ -71,7 +71,7 @@ pattern = r"Weibull_GPMMC_nMonte_(\d+)_N_(\d+)_CV_(\d\.\d+)_Mean_([\d\.]+)_(\d{8
 # Get a list of files that match the pattern in the directory
 matching_files = [file for file in os.listdir(directory) if re.match(pattern, file)]
 
-weighted = False
+weighted = True
 
 if weighted:
     # Initialize an empty list to store data from all files
@@ -184,7 +184,7 @@ for replacement in [True, False]:
                 data['se_sampled_se_ln_ratio'].append(df_record['sampled_ave_se_ln_ratio'].std()/sqrt(nSim))
                 # print(data)
             save_path = f"Sampled_mean_ave_ln_ratio_dask_{str(datetime.now()).split('.')[0].replace('-','').replace(' ','').replace(':','')}.csv"
-            df_record.to_csv(f'Record_replacement_{replacement}_{save_path}')
+            # df_record.to_csv(f'Record_replacement_{replacement}_weighted_{weighted}_{save_path}')
 
 # Create a DataFrame from the list of data
 df = pd.DataFrame(data)
@@ -193,7 +193,7 @@ df = pd.DataFrame(data)
 
 end_time = datetime.now() # record the datetime at the end
 print('end_time:', end_time) # print the datetime at the end
-save_path = f"Sampled_mean_ave_ln_ratio_dask_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}.csv"
+save_path = f"Weighted_{weighted}_mean_ave_ln_ratio_dask_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}.csv"
 df.to_csv(save_path)
 
 print(f"save to {save_path}")
