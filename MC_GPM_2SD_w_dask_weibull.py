@@ -8,7 +8,7 @@ import dask.dataframe as dd
 from scipy.optimize import minimize
 
 class SimulPivotMC(object):
-    def __init__(self, nMonteSim, N, CVTimeScale):
+    def __init__(self, nMonteSim, N, CVTimeScale1, CVTimeScale2):
         # number of Monte Carlo Simulation
         self.nMonte = nMonteSim
 
@@ -20,8 +20,8 @@ class SimulPivotMC(object):
         self.N2 = self.N1
 
         # coefficient of variation, we choose 0.15, 0.3, 0.5
-        self.CV1 = CVTimeScale
-        self.CV2 = self.CV1
+        self.CV1 = CVTimeScale1
+        self.CV2 = CVTimeScale2
 
         # Mean in log scale, notation "μ_i" in the manuscript
         # self.rMeanLogScale1 = 0
@@ -36,8 +36,14 @@ class SimulPivotMC(object):
         # self.rSDLogScale2 = self.rSDLogScale1
         # print('self.rSDLogScale1:',self.rSDLogScale1)
 
-        df_weibull_params = pd.read_csv('weibull_params1e-5_mu_0.csv')[['CV','shape_parameter','scale_parameter']]
-        self.shape_parameter, self.scale_parameter = df_weibull_params[df_weibull_params['CV']==CVTimeScale][['shape_parameter','scale_parameter']].iloc[0,:]
+        df_weibull_params = pd.read_csv('weibull_params1e-6_mean_1.csv')[['CV','shape_parameter','scale_parameter']]
+        self.shape_parameter1, self.scale_parameter1 = df_weibull_params[df_weibull_params['CV']==CVTimeScale1][['shape_parameter','scale_parameter']].iloc[0,:]
+        print(f'CVTimeScale1: {CVTimeScale1}')
+        print(f'self.shape_parameter1, self.scale_parameter1: {self.shape_parameter1, self.scale_parameter1 }')
+
+        self.shape_parameter2, self.scale_parameter2 = df_weibull_params[df_weibull_params['CV']==CVTimeScale2][['shape_parameter','scale_parameter']].iloc[0,:]
+        print(f'CVTimeScale2: {CVTimeScale2}')
+        print(f'self.shape_parameter2, self.scale_parameter2: {self.shape_parameter2, self.scale_parameter2 }')
 
         # the number for pivot, the notation "m" in the manuscript
         nSimulForPivot = 100000-1
@@ -123,7 +129,9 @@ class SimulPivotMC(object):
 
 
     def Sample_Weibull(self, row, seed_):
-        rSampleOfRandoms = weibull_min.rvs(self.shape_parameter, scale=self.scale_parameter, size=self.N1+self.N2, random_state = row[seed_])
+        rSampleOfRandoms1 = weibull_min.rvs(self.shape_parameter1, scale=self.scale_parameter1, size=self.N1, random_state = row[seed_])
+        rSampleOfRandoms2 = weibull_min.rvs(self.shape_parameter2, scale=self.scale_parameter2, size=self.N2, random_state = row[seed_])
+        rSampleOfRandoms = np.concatenate((rSampleOfRandoms1, rSampleOfRandoms2))
         # np.random.seed(row[seed_])
         # rSampleOfRandoms = [(weibuldl_min.ppf(i, self.shape_parameter, scale=self.scale_parameter)) for i in np.random.rand(self.N1+self.N2)]
 
@@ -209,19 +217,19 @@ class SimulPivotMC(object):
 if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100000
-    for method_of_moments in ['no_moments']:#,'first_two_moment']: #, 'first_two_moment', 'higher_orders_of_moments'
+    for method_of_moments in ['first_two_moments']:# ['no_moments']:#,'first_two_moments']: #, 'first_two_moment', 'higher_orders_of_moments'
         print(method_of_moments)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-        for N in [15, 25, 50]: 
+        for N in [25]: 
             # coefficient of variation, we choose 0.15, 0.3, 0.5
-            for CV in [0.15, 0.3, 0.5]: 
+            for CV1, CV2 in [(0.3, 0.5)]: 
                 # record the datetime at the start
                 start_time = datetime.now() 
                 print('start_time:', start_time) 
-                print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV_{CV}_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}")
+                print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV1_{CV1}_CV2_{CV2}_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}")
 
                 # Cal the class SimulPivotMC(), generate variables in the def __init__(self)
-                run = SimulPivotMC(nMonteSim, N, CV)  
+                run = SimulPivotMC(nMonteSim, N, CV1, CV2)  
                 # start main()
                 coverage_by_ln_ratio, df_record, nMonte, N1, CV1 = run.main(method_of_moments=method_of_moments)  
                 
@@ -237,7 +245,7 @@ if __name__ == '__main__':
                     
                 output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\n percentage coverage: {coverage_by_ln_ratio}\n"
                 
-                output_dir = f"Weibull_GPMMC_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
+                output_dir = f"Weibull_GPMMC_nMonte_{nMonte}_N_{N1}_CV1_{CV1}_CV2_{CV2}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
                 
                 # save the results to the csv
                 print('csv save to ' + output_dir + f'_{method_of_moments}.csv')
