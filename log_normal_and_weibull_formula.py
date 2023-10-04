@@ -14,7 +14,7 @@ class weibull_and_lognorm(object):
         MeanLogScale = 0
         # MeanLogScale_1 = log(Mean/sqrt(CVsq + 1)) 
         # self.MeanTimeScale = exp(MeanLogScale) * sqrt(CV**2 +1)
-        self.MeanTimeScale = 3
+        self.MeanTimeScale = 1
         self.VarTimeScale = (CVTimeScale * self.MeanTimeScale)**2
         # self.VarLogScale = log(1 + CVTimeScale ** 2)
         print('self.MeanTimeScale:',self.MeanTimeScale)
@@ -129,9 +129,9 @@ class weibull_and_lognorm(object):
     
 
 weibull_params = {'N':[],'CV':[],'shape_parameter':[],'scale_parameter':[],'MeanTimeScale': [], 'VarTimeScale': [], 'shape_parameter': [], 'scale_parameter': [], 'MeanWeibull': [], 'VarWeibull': [], 'diff': [], 'diff_mean': [], 'diff_var': []}
-for N in [15]: 
+for N in [25]: 
     # coefficient of variation, we choose 0.15, 0.3, 0.5
-    for CV in [0.15, 0.3, 0.5]: 
+    for CV in [0.15, 0.15/1.2, 0.5, 0.5/1.2]: 
         print('N,CV:',N,CV)
         weibull_params['N'].append(N)
         weibull_params['CV'].append(CV)
@@ -147,7 +147,7 @@ for N in [15]:
         weibull_params['diff'].append(extract_df['diff'])
         weibull_params['diff_mean'].append(extract_df['diff_mean'])
         weibull_params['diff_var'].append(extract_df['diff_var'])
-pd.DataFrame(weibull_params).to_csv('weibull_params1e-6_mean_3.csv')
+pd.DataFrame(weibull_params).to_csv('weibull_params1e-6_mean_1_CV_25_50_1_2.csv')
 quit()
 
 
