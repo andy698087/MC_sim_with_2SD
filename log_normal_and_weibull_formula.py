@@ -118,7 +118,7 @@ class weibull_and_lognorm(object):
         return shape_parameter, scale_parameter
     
     def loss_func(self, a1, a2, b1, b2):
-        return abs(a1-b1)+ self.weight_ * abs(a2-b2)
+        return abs(a1-b1)+  abs(a2-b2)
     
     def loss_func2(self, a1, a2, b1, b2):
         return (abs(a1-b1)+ weight_ * abs(a2-b2)) +  (-log(a2/b2))
@@ -131,7 +131,7 @@ class weibull_and_lognorm(object):
 weibull_params = {'N':[],'CV':[],'shape_parameter':[],'scale_parameter':[],'MeanTimeScale': [], 'VarTimeScale': [], 'shape_parameter': [], 'scale_parameter': [], 'MeanWeibull': [], 'VarWeibull': [], 'diff': [], 'diff_mean': [], 'diff_var': []}
 for N in [25]: 
     # coefficient of variation, we choose 0.15, 0.3, 0.5
-    for CV in [0.15, 0.15/1.2, 0.5, 0.5/1.2]: 
+    for CV in [0.15, 0.20, 0.25]: 
         print('N,CV:',N,CV)
         weibull_params['N'].append(N)
         weibull_params['CV'].append(CV)
