@@ -299,8 +299,8 @@ class SimulPivotMC(object):
     
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 100
-    for method in ['Luo_Wan']:
+    nMonteSim = 100000
+    for method in ['no_moments', 'Luo_Wan']:
         print(method)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
         for N in [15, 27, 51]: 
@@ -330,7 +330,7 @@ if __name__ == '__main__':
                 output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\ncoverage SD: {coverage_SD}\n\ncoverage Mean: {coverage_Mean}\n"
                 
                 output_dir = f"MeanSD_From5Values_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
-                folder = "MeanSD_From5Values_3VtoMeanSDinRaw_20231024"
+                folder = "MeanSD_From3ValuesInRaw_20231025_N51"
                 output_dir = os.path.join(folder, output_dir)
 
                 # save the results to the csv
