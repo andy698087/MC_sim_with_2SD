@@ -139,7 +139,7 @@ class SimulPivotMC(object):
 
         print('Coverage Mean')
         # check coverage of each rows
-        df_Mean = df_Mean.apply(self.Coverage, args=(0,1,1), meta=meta) 
+        df_Mean = df_Mean.apply(self.Coverage, args=(0,1,0), meta=meta) 
         df_record['coverage_Mean'] = df_Mean.compute().tolist()        
 
         print('Mean coverage_Mean')
@@ -280,7 +280,7 @@ class SimulPivotMC(object):
         # print(f'Mean Pivot2:{Pivot2}')
 
         # Equation 2, generalized pivotal statistics
-        pivot_statistics = np.exp(Pivot1 - Pivot2)
+        pivot_statistics = Pivot1 - Pivot2 # ln(exp(Pivot1 - Pivot2))
         # print(f'Mean pivot_statistics:{pivot_statistics}')
 
         # print(f'mean 0.025p {pd.Series(pivot_statistics).quantile(.025)}, mean 0.975p {pd.Series(pivot_statistics).quantile(.975)}')
