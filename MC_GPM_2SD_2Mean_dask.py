@@ -67,15 +67,13 @@ class SimulPivotMC(object):
         list_seeds = [i for i in range(self.seed_value, self.seed_value + self.nMonte)] 
         # put the list of seeds into a table (a.k.a DataFrame) with one column named "Seeds"  
         df = pd.DataFrame({'Seeds':list_seeds}) 
-        df_record = df
-        meta = ('float64', 'float64')
+        
         #using no method of moments 
         if method == 'no_moments': 
             print(f'method:{method}')
             print('Samples_normal')
             # generate log-normal distributed numbers, using mean of rMeanLogScale and standard deviation of rSDLogScale
             df['rSampleOfRandoms'] = df.apply(self.Samples_normal, args=('Seeds',), axis=1) 
-            df_record = df
 
             print('dask')
             # put the table into dask, a progress that can parallel calculating each rows using multi-thread
@@ -91,27 +89,21 @@ class SimulPivotMC(object):
             print('Samples_normal + exponential')
             df['rSampleOfRandoms'] = df.apply(self.Samples_normal, args=('Seeds',), axis=1).apply(lambda x: [np.exp(item) for item in x])            
             
-            print('dask')
-            # put the table into dask, a progress that can parallel calculating each rows using multi-thread
-            df = dd.from_pandas(df['rSampleOfRandoms'], npartitions=35) 
-
             # using Equation 7 and 8
-            if method == 'Luo_Wan':
+            if method in ['Luo_Wan', 'bc', 'qe', 'mln']:
                 print(f'get_estimated_Mean_SD_from_Samples with method = {method}')
                 # calculate sample mean and SD using Mean_SD
-                df = df.apply(self.get_estimated_Mean_SD_from_Samples, args=(method,), meta=meta)
-                
+                df[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']] = df['rSampleOfRandoms'].apply(self.get_estimated_Mean_SD_from_Samples, args=(method,)).tolist()
+            
+            df_record = df[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']].copy()
 
-            elif method in ['bc', 'qe', 'mln']:
-                print(f'get_estimated_Mean_SD_from_Samples with method = {method}')
-                # calculate sample mean and SD using Mean_SD
-                df = df.apply(self.get_estimated_Mean_SD_from_Samples, args=(method,), meta=meta)
-             
-            df_record[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']] = df.compute().tolist()
+            print('dask')
+            df = dd.from_pandas(df[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']], npartitions=35) 
+            meta = ('float64', 'float64')
 
             print('first_two_moment')
             # transform sample mean and SD in log scale using estimated Mean and SD
-            df = df.apply(self.first_two_moment, args=(0,1,2,3), meta=('float64', 'float64')) 
+            df = df.apply(self.first_two_moment, axis=1, args=(0,1,2,3), meta=('float64', 'float64')) 
                            
         else:
             print('no method in main')
@@ -175,11 +167,10 @@ class SimulPivotMC(object):
 
         return rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
 
-    def get_estimated_Mean_SD_from_Samples(self, row, method):
-
+    def get_estimated_Mean_SD_from_Samples(self, row, method = 'Luo_Wan'):
         rSampleOfRandoms1 = row[:self.N1]
         rSampleOfRandoms2 = row[self.N1:(self.N1+self.N2)]
-        print(f'rSampleOfRandoms1: {rSampleOfRandoms1}')
+
         q1_1 = pd.Series(rSampleOfRandoms1).quantile(.25)
         median_1 = pd.Series(rSampleOfRandoms1).quantile(.5)
         q3_1 = pd.Series(rSampleOfRandoms1).quantile(.75)
@@ -194,17 +185,16 @@ class SimulPivotMC(object):
             rSampleMean1, rSampleSD1 = self.ThreeValues_to_Mean_SD_Luo_Wan(q1_1, median_1, q3_1, self.N1)
             rSampleMean2, rSampleSD2 = self.ThreeValues_to_Mean_SD_Luo_Wan(q1_2, median_2, q3_2, self.N2)
         elif method in ['bc', 'qe', 'mln']:
-            print(f'in get_estimated_Mean_SD_from_Samples method:{method}')
+            
             robjects.r(f"""
             library(estmeansd)
             set.seed(1)
             mean_sd1 <- {method}.mean.sd(q1.val = {q1_1}, med.val = {median_1}, q3.val = {q3_1}, n = {self.N1})
             mean_sd2 <- {method}.mean.sd(q1.val = {q1_2}, med.val = {median_2}, q3.val = {q3_2}, n = {self.N2})
                     """)
-            print(f'get_estimated_Mean_SD_from_Samples rSampleMean1, rSampleSD1:{rSampleMean1}, {rSampleSD1}')
+
             rSampleMean1, rSampleSD1 = robjects.r['mean_sd1'][0][0], robjects.r['mean_sd1'][1][0]
             rSampleMean2, rSampleSD2 = robjects.r['mean_sd2'][0][0], robjects.r['mean_sd2'][1][0]
-            
 
         else:
             print('not right method in get_estimated_Mean_SD_from_Samples')
@@ -222,11 +212,11 @@ class SimulPivotMC(object):
     
     def first_two_moment(self, row, col_SampleMean1, col_SampleSD1, col_SampleMean2, col_SampleSD2):
         
-        SampleMean1 = row[col_SampleMean1]
-        SampleSD1 = row[col_SampleSD1]
+        SampleMean1 = row.iloc[col_SampleMean1]
+        SampleSD1 = row.iloc[col_SampleSD1]
 
-        SampleMean2 = row[col_SampleMean2]
-        SampleSD2 = row[col_SampleSD2]
+        SampleMean2 = row.iloc[col_SampleMean2]
+        SampleSD2 = row.iloc[col_SampleSD2]
         #using Equation 7 and 8
         rSampleMeanLogScale1, rSampleSDLogScale1 = self.transform_from_raw_to_log_mean_SD(SampleMean1, SampleSD1)
         rSampleMeanLogScale2, rSampleSDLogScale2 = self.transform_from_raw_to_log_mean_SD(SampleMean2, SampleSD2)
@@ -321,13 +311,13 @@ class SimulPivotMC(object):
     
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 100
-    for method in ['bc']:
+    nMonteSim = 100000
+    for method in ['bc', 'bc', 'qe', 'mln']:
         print(method)
         # Sample size, we choose 15, 27, 51, notation "n" in the manuscript
-        for N in [15]: 
+        for N in [15, 27, 51]: 
             # coefficient of variation, we choose 0.15, 0.3, 0.5
-            for CV in [0.15]: 
+            for CV in [0.15, 0.3, 0.5]: 
                 # record the datetime at the start
                 start_time = datetime.now() 
                 print('start_time:', start_time) 
