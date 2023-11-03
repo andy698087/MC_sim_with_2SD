@@ -6,6 +6,7 @@ from datetime import datetime
 from math import sqrt, log, exp
 import dask.dataframe as dd
 import os
+import rpy2.robjects as robjects
 
 class SimulPivotMC(object):
     def __init__(self, nMonteSim, N, CV):
@@ -66,6 +67,7 @@ class SimulPivotMC(object):
         list_seeds = [i for i in range(self.seed_value, self.seed_value + self.nMonte)] 
         # put the list of seeds into a table (a.k.a DataFrame) with one column named "Seeds"  
         df = pd.DataFrame({'Seeds':list_seeds}) 
+        df_record = df
         meta = ('float64', 'float64')
         #using no method of moments 
         if method == 'no_moments': 
@@ -83,12 +85,11 @@ class SimulPivotMC(object):
             df = df.apply(self.Mean_SD, meta=meta) 
 
         # using method of moments to transform from raw to log mean and SD
-        elif method in ['Luo_Wan']:
+        elif method in ['Luo_Wan', 'bc', 'qe', 'mln']:
             print(f'method:{method}')
             # generate log-normal distributed numbers, using mean of rMeanLogScale and standard deviation of rSDLogScale
             print('Samples_normal + exponential')
-            df['rSampleOfRandoms'] = df.apply(self.Samples_normal, args=('Seeds',), axis=1).apply(lambda x: [np.exp(item) for item in x])
-            df_record = df
+            df['rSampleOfRandoms'] = df.apply(self.Samples_normal, args=('Seeds',), axis=1).apply(lambda x: [np.exp(item) for item in x])            
             
             print('dask')
             # put the table into dask, a progress that can parallel calculating each rows using multi-thread
@@ -98,14 +99,22 @@ class SimulPivotMC(object):
             if method == 'Luo_Wan':
                 print(f'get_estimated_Mean_SD_from_Samples with method = {method}')
                 # calculate sample mean and SD using Mean_SD
-                df = df.apply(self.get_estimated_Mean_SD_from_Samples, meta=meta)
+                df = df.apply(self.get_estimated_Mean_SD_from_Samples, args=(method,), meta=meta)
                 
-                print('first_two_moment')
-                # transform sample mean and SD in log scale using estimated Mean and SD
-                df = df.apply(self.first_two_moment, args=(0,1,2,3), meta=('float64', 'float64')) 
 
-            else:
-                print('no method in main')
+            elif method in ['bc', 'qe', 'mln']:
+                print(f'get_estimated_Mean_SD_from_Samples with method = {method}')
+                # calculate sample mean and SD using Mean_SD
+                df = df.apply(self.get_estimated_Mean_SD_from_Samples, args=(method,), meta=meta)
+             
+            df_record[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']] = df.compute().tolist()
+
+            print('first_two_moment')
+            # transform sample mean and SD in log scale using estimated Mean and SD
+            df = df.apply(self.first_two_moment, args=(0,1,2,3), meta=('float64', 'float64')) 
+                           
+        else:
+            print('no method in main')
 
         df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
         
@@ -166,11 +175,11 @@ class SimulPivotMC(object):
 
         return rSampleMean1, rSampleSD1, rSampleMean2, rSampleSD2
 
-    def get_estimated_Mean_SD_from_Samples(self, row, method = 'Luo_Wan'):
+    def get_estimated_Mean_SD_from_Samples(self, row, method):
 
         rSampleOfRandoms1 = row[:self.N1]
         rSampleOfRandoms2 = row[self.N1:(self.N1+self.N2)]
-        
+        print(f'rSampleOfRandoms1: {rSampleOfRandoms1}')
         q1_1 = pd.Series(rSampleOfRandoms1).quantile(.25)
         median_1 = pd.Series(rSampleOfRandoms1).quantile(.5)
         q3_1 = pd.Series(rSampleOfRandoms1).quantile(.75)
@@ -184,6 +193,19 @@ class SimulPivotMC(object):
             # the standard deviation of rSampleOfRandoms1, delta degree of freeden = 1, notation "sz_i"
             rSampleMean1, rSampleSD1 = self.ThreeValues_to_Mean_SD_Luo_Wan(q1_1, median_1, q3_1, self.N1)
             rSampleMean2, rSampleSD2 = self.ThreeValues_to_Mean_SD_Luo_Wan(q1_2, median_2, q3_2, self.N2)
+        elif method in ['bc', 'qe', 'mln']:
+            print(f'in get_estimated_Mean_SD_from_Samples method:{method}')
+            robjects.r(f"""
+            library(estmeansd)
+            set.seed(1)
+            mean_sd1 <- {method}.mean.sd(q1.val = {q1_1}, med.val = {median_1}, q3.val = {q3_1}, n = {self.N1})
+            mean_sd2 <- {method}.mean.sd(q1.val = {q1_2}, med.val = {median_2}, q3.val = {q3_2}, n = {self.N2})
+                    """)
+            print(f'get_estimated_Mean_SD_from_Samples rSampleMean1, rSampleSD1:{rSampleMean1}, {rSampleSD1}')
+            rSampleMean1, rSampleSD1 = robjects.r['mean_sd1'][0][0], robjects.r['mean_sd1'][1][0]
+            rSampleMean2, rSampleSD2 = robjects.r['mean_sd2'][0][0], robjects.r['mean_sd2'][1][0]
+            
+
         else:
             print('not right method in get_estimated_Mean_SD_from_Samples')
 
@@ -299,13 +321,13 @@ class SimulPivotMC(object):
     
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 100000
-    for method in ['no_moments', 'Luo_Wan']:
+    nMonteSim = 100
+    for method in ['bc']:
         print(method)
-        # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
-        for N in [15, 27, 51]: 
+        # Sample size, we choose 15, 27, 51, notation "n" in the manuscript
+        for N in [15]: 
             # coefficient of variation, we choose 0.15, 0.3, 0.5
-            for CV in [0.15, 0.3, 0.5]: 
+            for CV in [0.15]: 
                 # record the datetime at the start
                 start_time = datetime.now() 
                 print('start_time:', start_time) 
@@ -330,7 +352,7 @@ if __name__ == '__main__':
                 output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\ncoverage SD: {coverage_SD}\n\ncoverage Mean: {coverage_Mean}\n"
                 
                 output_dir = f"MeanSD_From5Values_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
-                folder = "MeanSD_From3ValuesInRaw_20231025_N51"
+                folder = "MeanSD_From3ValuesInRaw_BCQEMLN_20231103"
                 output_dir = os.path.join(folder, output_dir)
 
                 # save the results to the csv
