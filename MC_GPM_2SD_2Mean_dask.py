@@ -343,7 +343,7 @@ class SimulPivotMC(object):
 if __name__ == '__main__':
     # number of Monte Carlo simulations
     nMonteSim = 100
-    for method in ['bc', 'bc', 'qe', 'mln']:
+    for method in ['bc', 'qe', 'mln']:
         print(method)
         # Sample size, we choose 15, 27, 51, notation "n" in the manuscript
         for N in [15, 27, 51]: 
