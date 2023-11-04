@@ -341,7 +341,7 @@ if __name__ == '__main__':
         # Cal the class SimulPivotMC(), generate variables in the def __init__(self)
         run = SimulPivotMC(nMonteSim, N, CV, rpy_out_files_path)  
         # start main()
-        df_record, nMonte, N1, CV1, method = run.main(method=method)  
+        coverage_SD, coverage_Mean, df_record, nMonte, N1, CV1, method = run.main(method=method)  
         
         # record the datetime at the end
         end_time = datetime.now() 
@@ -351,6 +351,9 @@ if __name__ == '__main__':
         time_difference = end_time - start_time
         print('time_difference:', time_difference) 
 
+        # print out the percentage of coverage
+        print('coverage SD: %s' %(coverage_SD,)) 
+        print('coverage Mean: %s' %(coverage_Mean,)) 
             
         # output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\ncoverage SD: {coverage_SD}\n\ncoverage Mean: {coverage_Mean}\n"
         
