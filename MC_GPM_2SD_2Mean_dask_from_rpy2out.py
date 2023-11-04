@@ -10,7 +10,7 @@ import re
 
 class SimulPivotMC(object):
     def __init__(self, nMonteSim, N, CV, rpy_out_files_path):
-        self.rpy_path = rpy_out_files_path
+        self.rpy_out_files_path = rpy_out_files_path
 
         # number of Monte Carlo Simulation
         self.nMonte = nMonteSim
@@ -320,7 +320,7 @@ if __name__ == '__main__':
     output_folder = "MeanSD_From3ValuesInRaw_BCQEMLN_rpy2out_20231104"
     files_list = os.listdir(output_folder)
     pattern = r"MeanSD_From5Values_nMonte_(\d+)_N_(\d+)_CV_(\d\.\d+)_rpy2out_(\d{8}\d{6})_(\w+).csv"
-    matching_files = [file for file in os.listdir(directory) if re.match(pattern, file)]
+    matching_files = [file for file in files_list if re.match(pattern, file)]
     print(f'matching_files: {matching_files}')
 
     for filename in matching_files:
