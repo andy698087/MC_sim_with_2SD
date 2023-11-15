@@ -10,7 +10,7 @@ import re
 
 class SimulPivotMC(object):
     def __init__(self, nMonteSim, N, CV, rpy_out_files_path):
-        self.rpy_path = rpy_out_files_path
+        self.rpy_out_files_path = rpy_out_files_path
 
         # number of Monte Carlo Simulation
         self.nMonte = nMonteSim
@@ -316,11 +316,15 @@ class SimulPivotMC(object):
         return int(intervals_include_zero)  
     
 if __name__ == '__main__':
-    
-    output_folder = "MeanSD_From3ValuesInRaw_BCQEMLN_rpy2out_20231104"
-    files_list = os.listdir(output_folder)
+        
+    output_folder = "MeanSD_From3ValuesInRaw_BCQEMLN_from_rpy2out_20231104"
+    # Make sure the directory exists, create it if necessary
+    os.makedirs(output_folder, exist_ok=True)
+
+    input_folder = "MeanSD_From3ValuesInRaw_BCQEMLN_rpy2out_20231104"
+    files_list = os.listdir(input_folder)
     pattern = r"MeanSD_From5Values_nMonte_(\d+)_N_(\d+)_CV_(\d\.\d+)_rpy2out_(\d{8}\d{6})_(\w+).csv"
-    matching_files = [file for file in os.listdir(directory) if re.match(pattern, file)]
+    matching_files = [file for file in files_list if re.match(pattern, file)]
     print(f'matching_files: {matching_files}')
 
     for filename in matching_files:
@@ -337,11 +341,11 @@ if __name__ == '__main__':
         print('start_time:', start_time) 
         print(f"Start GPM_MC_nMonteSim_{nMonteSim}_N_{N}_CV_{CV}_rpy2out_{str(start_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}_{method}")
 
-        rpy_out_files_path = os.path.join(output_folder, filename)
+        rpy_out_files_path = os.path.join(input_folder, filename)
         # Cal the class SimulPivotMC(), generate variables in the def __init__(self)
         run = SimulPivotMC(nMonteSim, N, CV, rpy_out_files_path)  
         # start main()
-        df_record, nMonte, N1, CV1, method = run.main(method=method)  
+        coverage_SD, coverage_Mean, df_record, nMonte, N1, CV1, method = run.main(method=method)  
         
         # record the datetime at the end
         end_time = datetime.now() 
@@ -351,10 +355,13 @@ if __name__ == '__main__':
         time_difference = end_time - start_time
         print('time_difference:', time_difference) 
 
+        # print out the percentage of coverage
+        print('coverage SD: %s' %(coverage_SD,)) 
+        print('coverage Mean: %s' %(coverage_Mean,)) 
             
         # output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\ncoverage SD: {coverage_SD}\n\ncoverage Mean: {coverage_Mean}\n"
         
-        output_dir = f"MeanSD_From5Values_nMonte_{nMonte}_N_{N1}_CV_{CV1}_rpy2out_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
+        output_dir = f"MeanSD_From5Values_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
         output_dir = os.path.join(output_folder, output_dir)
 
         # save the results to the csv

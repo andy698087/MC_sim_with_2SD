@@ -6,7 +6,38 @@ from datetime import datetime
 from math import sqrt, log, exp
 import dask.dataframe as dd
 import os
+import rpy2.robjects.packages as rpackages
 import rpy2.robjects as robjects
+from rpy2.robjects.vectors import StrVector
+
+os.environ['R_HOME'] = 'C:/Program Files/R/R-4.3.2'
+
+# Define your personal library path (change it to a path you have write access to)
+personal_lib_path = os.path.expanduser("C:/Users/User/R-3.6.1")  # Example for Windows
+# For Unix-like systems, you might use something like '~/R/x86_64-pc-linux-gnu-library/4.3'
+
+# Make sure the directory exists, create it if necessary
+os.makedirs(personal_lib_path, exist_ok=True)
+
+# Set the R environment variable 'R_LIBS_USER' to your personal library path
+robjects.r(f'.libPaths("{personal_lib_path}")')
+
+# import R's utility package
+utils = rpackages.importr('utils')
+
+# select a mirror for R packages
+utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+
+# R package names
+packnames = ('estmeansd', 'Matrix', 'lattice') #('ggplot2', 'hexbin')
+
+# StrVector is R vector of strings
+# Selectively install what needs to be install.
+# We are fancy, just because we can.
+names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+if len(names_to_install) > 0:
+    utils.install_packages(StrVector(names_to_install))
+
 
 class SimulPivotMC(object):
     def __init__(self, nMonteSim, N, CV):
