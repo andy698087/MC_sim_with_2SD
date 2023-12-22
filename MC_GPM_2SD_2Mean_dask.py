@@ -10,18 +10,6 @@ import rpy2.robjects.packages as rpackages
 import rpy2.robjects as robjects
 from rpy2.robjects.vectors import StrVector
 
-os.environ['R_HOME'] = 'C:/Program Files/R/R-4.3.2'
-
-# Define your personal library path (change it to a path you have write access to)
-personal_lib_path = os.path.expanduser("C:/Users/User/R-3.6.1")  # Example for Windows
-# For Unix-like systems, you might use something like '~/R/x86_64-pc-linux-gnu-library/4.3'
-
-# Make sure the directory exists, create it if necessary
-os.makedirs(personal_lib_path, exist_ok=True)
-
-# Set the R environment variable 'R_LIBS_USER' to your personal library path
-robjects.r(f'.libPaths("{personal_lib_path}")')
-
 # import R's utility package
 utils = rpackages.importr('utils')
 
@@ -29,7 +17,19 @@ utils = rpackages.importr('utils')
 utils.chooseCRANmirror(ind=1) # select the first mirror in the list
 
 # R package names
-packnames = ('estmeansd', 'Matrix', 'lattice') #('ggplot2', 'hexbin')
+packnames = ('estmeansd',) #('ggplot2', 'hexbin')
+
+# StrVector is R vector of strings
+# Selectively install what needs to be install.
+# We are fancy, just because we can.
+names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+
+if len(names_to_install) > 0:
+    print(f"installing R packages: {names_to_install}")
+    utils.install_packages(StrVector(names_to_install))
+else:
+    print("R package estmeansd has been installed")
+
 
 # StrVector is R vector of strings
 # Selectively install what needs to be install.
@@ -107,16 +107,14 @@ class SimulPivotMC(object):
             # generate log-normal distributed numbers, using mean of rMeanLogScale and standard deviation of rSDLogScale
             df['rSampleOfRandoms'] = df.apply(self.Samples_normal, args=('Seeds',), axis=1) 
 
-            df[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']] = df['rSampleOfRandoms'].apply(lambda x: [np.exp(item) for item in x]).apply(self.Mean_SD).tolist()
-            df_record = df[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']].copy()
-
             print('dask')
             # put the table into dask, a progress that can parallel calculating each rows using multi-thread
             df = dd.from_pandas(df['rSampleOfRandoms'], npartitions=16) 
             print('Mean_SD')
             # calculate sample mean and SD using Mean_SD
-            df = df.apply(self.Mean_SD, meta=meta) 
-
+            df = df.apply(self.Mean_SD, meta=meta)       
+            
+            
         # using method of moments to transform from raw to log mean and SD
         elif method in ['Luo_Wan', 'bc', 'qe', 'mln']:
             print(f'method:{method}')
@@ -349,13 +347,13 @@ os.makedirs(folder, exist_ok = True)
 
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 10
-    for method in ['no_moments','Luo_Wan']:#['bc', 'qe', 'mln']:
+    nMonteSim = 100000
+    for method in ['bc', 'qe', 'mln']:
         print(method)
         # Sample size, we choose 15, 27, 51, notation "n" in the manuscript
-        for N in [15, 27, 51]: 
+        for N in [51]:#[15, 27, 51]: 
             # coefficient of variation, we choose 0.15, 0.3, 0.5
-            for CV in [0.15, 0.3, 0.5]: 
+            for CV in [0.5]:#[0.15, 0.3, 0.5]: 
                 # record the datetime at the start
                 start_time = datetime.now() 
                 print('start_time:', start_time) 
@@ -386,5 +384,4 @@ if __name__ == '__main__':
                 # save the results to the csv
                 print('csv save to ' + output_dir + f'_{method}.csv')
                 df_record.to_csv(output_dir + f'_{method}.csv')
-
-    quit()
+quit()
