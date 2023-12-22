@@ -98,13 +98,17 @@ class SimulPivotMC(object):
         list_seeds = [i for i in range(self.seed_value, self.seed_value + self.nMonte)] 
         # put the list of seeds into a table (a.k.a DataFrame) with one column named "Seeds"  
         df = pd.DataFrame({'Seeds':list_seeds}) 
-        
+        meta=('float64', 'float64')
+
         #using no method of moments 
         if method == 'no_moments': 
             print(f'method:{method}')
             print('Samples_normal')
             # generate log-normal distributed numbers, using mean of rMeanLogScale and standard deviation of rSDLogScale
             df['rSampleOfRandoms'] = df.apply(self.Samples_normal, args=('Seeds',), axis=1) 
+
+            df[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']] = df['rSampleOfRandoms'].apply(lambda x: [np.exp(item) for item in x]).apply(self.Mean_SD).tolist()
+            df_record = df[['rSampleMeanRaw1', 'rSampleSDRaw1', 'rSampleMeanRaw2', 'rSampleSDRaw2']].copy()
 
             print('dask')
             # put the table into dask, a progress that can parallel calculating each rows using multi-thread
@@ -134,7 +138,7 @@ class SimulPivotMC(object):
 
             print('first_two_moment')
             # transform sample mean and SD in log scale using estimated Mean and SD
-            df = df.apply(self.first_two_moment, axis=1, args=(0,1,2,3), meta=('float64', 'float64')) 
+            df = df.apply(self.first_two_moment, axis=1, args=(0,1,2,3), meta=meta) 
                            
         else:
             print('no method in main')
@@ -339,11 +343,14 @@ class SimulPivotMC(object):
         intervals_include_zero = (lower_bound < ideal) and (upper_bound > ideal)
         # 1 as True, 0 as False, check coverage
         return int(intervals_include_zero)  
-    
+
+folder = "MeanSD_From3ValuesInRaw_BCQEMLN_20231207"
+os.makedirs(folder, exist_ok = True)
+
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 100000
-    for method in ['bc', 'qe', 'mln']:
+    nMonteSim = 10
+    for method in ['no_moments','Luo_Wan']:#['bc', 'qe', 'mln']:
         print(method)
         # Sample size, we choose 15, 27, 51, notation "n" in the manuscript
         for N in [15, 27, 51]: 
@@ -373,7 +380,7 @@ if __name__ == '__main__':
                 output_txt1 = f"start_time: {start_time}\nend_time: {end_time}\ntime_difference: {time_difference}\n\nnMonte = {nMonte}; N1 = {N1}; CV1 = {CV1}\n\ncoverage SD: {coverage_SD}\n\ncoverage Mean: {coverage_Mean}\n"
                 
                 output_dir = f"MeanSD_From5Values_nMonte_{nMonte}_N_{N1}_CV_{CV1}_{str(end_time).split('.')[0].replace('-','').replace(' ','').replace(':','')}"
-                folder = "MeanSD_From3ValuesInRaw_BCQEMLN_20231103"
+
                 output_dir = os.path.join(folder, output_dir)
 
                 # save the results to the csv
