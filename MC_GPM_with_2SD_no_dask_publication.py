@@ -149,4 +149,3 @@ for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_mo
 
             # save the results to the csv
             pd.DataFrame(dict_results).to_csv(output_dir + f'_{method_of_moments}.csv')
-
