@@ -23,7 +23,7 @@ def transform_from_raw_to_log_mean_SD(Mean, SD):
 
 
 # number of Monte Carlo Simulations
-nMonte = 1
+nMonte = 1000000
 
 # Calculate z-score for alpha = 0.05
 # ppf is the percent point function that is inverse of cumulative distribution function
