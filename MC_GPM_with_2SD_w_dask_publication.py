@@ -1,4 +1,4 @@
-#This one, using the multithread, runs quickly (about 10 min for each 100,000 simulations). It obtains results identical to at least 16 digits as the one using no multithread.
+#This one, using the multithread, runs quickly (about 100 min for each 1,000,000 simulations). It obtains results identical to at least 16 digits as the one using no multithread.
 import pandas as pd
 import numpy as np
 from scipy.stats import norm, chi2
@@ -64,13 +64,11 @@ class SimulPivotMC(object):
         list_seeds = [i for i in range(self.seed_value, self.seed_value + self.nMonte)] 
         # put the list of seeds into a table (a.k.a DataFrame) with one column named "Seeds"  
         df = pd.DataFrame({'Seeds':list_seeds}) 
-
+        df_record = df.copy()
         #using no method of moments 
         if method_of_moments == 'no_moments': 
             # generate log-normal distributed numbers, using mean of rMeanLogScale and standard deviation of rSDLogScale
             df['rSampleOfRandoms'] = df.apply(self.Sample_inv_normal, args=('Seeds',), axis=1) 
-
-            df_record = df
             # put the table into dask, a progress that can parallel calculating each rows using multi-thread
             df = dd.from_pandas(df['rSampleOfRandoms'], npartitions=35) 
             # calculate sample mean and SD using Mean_SD
@@ -80,7 +78,6 @@ class SimulPivotMC(object):
         elif method_of_moments in ['first_two_moment', 'higher_orders_of_moments']:
             # generate log-normal distributed numbers, using mean of rMeanLogScale and standard deviation of rSDLogScale, transform values from log to raw with np.exp
             df['rSampleOfRandoms'] = df.apply(self.Sample_inv_normal, args=('Seeds',), axis=1).apply(lambda x: [np.exp(item) for item in x])
-            df_record = df
             # put the table into dask, a progress that can parallel calculating each rows using multi-thread
             df = dd.from_pandas(df['rSampleOfRandoms'], npartitions=35) 
             # calculate sample mean and SD using Mean_SD
@@ -95,8 +92,6 @@ class SimulPivotMC(object):
             elif method_of_moments == 'higher_orders_of_moments':
                 
                 df = df.apply(self.higher_orders_of_moments, args=(0,1,2,3), meta=('float64', 'float64')) 
-       
-        df_record[['rSampleMeanLogScale1', 'rSampleSDLogScale1', 'rSampleMeanLogScale2', 'rSampleSDLogScale2']] = df.compute().tolist()
         
         # Equation 3 # generate 'ln_ratio' and 'se_ln_ratio' with sample mean and SD using GPM
         df = df.apply(self.GPM_log_ratio_SD, args=(0,1,2,3), meta=('float64', 'float64'))  
@@ -140,8 +135,8 @@ class SimulPivotMC(object):
         SampleMean2 = row[col_SampleMean2]
         SampleSD2 = row[col_SampleSD2]
         #using Equation 7 and 8
-        rSampleMeanLogScale1, rSampleSDLogScale1, _ = self.transform_from_raw_to_log_mean_SD(self.N1, SampleMean1, SampleSD1)
-        rSampleMeanLogScale2, rSampleSDLogScale2, _ = self.transform_from_raw_to_log_mean_SD(self.N2, SampleMean2, SampleSD2)
+        rSampleMeanLogScale1, rSampleSDLogScale1, _ = self.transform_from_raw_to_log_mean_SD(SampleMean1, SampleSD1)
+        rSampleMeanLogScale2, rSampleSDLogScale2, _ = self.transform_from_raw_to_log_mean_SD(SampleMean2, SampleSD2)
                    
         return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2
 
@@ -153,12 +148,12 @@ class SimulPivotMC(object):
         SampleMean2 = row[col_SampleMean2]
         SampleSD2 = row[col_SampleSD2]
         #using Equation 7 and 9
-        rSampleMeanLogScale1, _, rSampleSDLogScale1 = self.transform_from_raw_to_log_mean_SD(self.N1, SampleMean1, SampleSD1)
-        rSampleMeanLogScale2, _, rSampleSDLogScale2 = self.transform_from_raw_to_log_mean_SD(self.N2, SampleMean2, SampleSD2)
+        rSampleMeanLogScale1, _, rSampleSDLogScale1 = self.transform_from_raw_to_log_mean_SD(SampleMean1, SampleSD1)
+        rSampleMeanLogScale2, _, rSampleSDLogScale2 = self.transform_from_raw_to_log_mean_SD(SampleMean2, SampleSD2)
 
         return rSampleMeanLogScale1, rSampleSDLogScale1, rSampleMeanLogScale2, rSampleSDLogScale2
 
-    def transform_from_raw_to_log_mean_SD(Mean, SD):
+    def transform_from_raw_to_log_mean_SD(self, Mean, SD):
         CV = SD/Mean
         CVsq = CV**2
         #Mean in log scale, Equation 7
@@ -209,7 +204,7 @@ class SimulPivotMC(object):
     
 if __name__ == '__main__':
     # number of Monte Carlo simulations
-    nMonteSim = 1000000
+    nMonteSim = 10
     for method_of_moments in ['no_moments', 'first_two_moment', 'higher_orders_of_moments']:
         print(method_of_moments)
         # Sample size, we choose 15, 25, 50, notation "n" in the manuscript
